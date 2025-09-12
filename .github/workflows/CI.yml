@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: "Test action on ${{ matrix.gap-version }}"
+    name: "Test on ${{ matrix.gap-version }}, separator = ${{ matrix.sep }}"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -21,6 +21,9 @@ jobs:
           - '4.12'
           - '4.11'
           - '4.10'
+        sep:
+          - 'space'
+          - 'newline'
     steps:
       - name: "Check out this repository"
         uses: actions/checkout@v5
@@ -30,5 +33,13 @@ jobs:
         with:
           gap-version: ${{ matrix.gap-version }}
       - uses: ./this-action/
+        if: ${{ matrix.sep == 'space' }}
         with:
-          packages: 'utils sophus https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz'
+          packages: 'utils https://github.com/gap-packages/sophus.git https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz'
+      - uses: ./this-action/
+        if: ${{ matrix.sep == 'newline' }}
+        with:
+          packages: |
+            utils
+            https://github.com/gap-packages/sophus.git
+            https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
