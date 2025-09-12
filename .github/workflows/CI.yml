@@ -1,0 +1,34 @@
+name: CI
+
+# Trigger the workflow on push to master / main, or on pull request
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    name: "Test action on ${{ matrix.gap-version }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        gap-version:
+          - 'devel'
+          - '4.14'
+          - '4.13'
+          - '4.12'
+          - '4.11'
+          - '4.10'
+    steps:
+      - name: "Check out this repository"
+        uses: actions/checkout@v5
+        with:
+          path: this-action/
+      - uses: gap-actions/setup-gap@v3
+        with:
+          gap-version: ${{ matrix.gap-version }}
+      - uses: ./this-action/
+        with:
+          packages: 'utils sophus https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz'
