@@ -5,6 +5,10 @@ inputs:
     description: 'Space-separated list of packages to install'
     required: true
     default: ''
+  ignore-errors:
+    description: 'Ignore errors'
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -17,15 +21,23 @@ runs:
     - name: "Run tests"
       shell: bash
       run: |
-        # Avoid quitonbreak because not building documentation shouldn't crash this...
-        gap -A <<GAPInput
-          success := true;
-          success := success and LoadPackage("PackageManager");
-          pkgs := """${{ inputs.packages }}""";
-          pkgList := SplitString(pkgs," \n");
-          for pkg in pkgList do
-              success := success and InstallPackage( pkg );
-          od;
-          QUIT;
-          #QUIT_GAP(success);
-        GAPInput
+        # Convert newlines to spaces
+        PKGS=$(echo "${{ inputs.packages }}" | tr '\n' ' ')
+
+        error_found=false
+        # Use `gap` instead of `$GAP` to avoid quitonbreak
+        for pkg in $PKGS; do
+          if ! gap -A <<GAPInput
+            LoadPackage("PackageManager");
+            QUIT_GAP(InstallPackage("${pkg}"));
+          GAPInput; then
+            error_found=true
+            echo "::error::Installation of ${pkg} may have failed"
+          fi
+        done
+
+        # Exit unless ignore-errors is set to true
+        if "${{ inputs.ignore-errors }}"; then
+          exit 1
+        fi
+          
