@@ -27,10 +27,10 @@ runs:
         error_found=false
         # Use `gap` instead of `$GAP` to avoid quitonbreak
         for pkg in $PKGS; do
-          if ! gap -A <<-GAPInput
+          if ! gap -A <<GAPInput
             LoadPackage("PackageManager");
             QUIT_GAP(InstallPackage("${pkg}"));
-          GAPInput
+        GAPInput
           then
             error_found=true
             echo "::error::Installation of ${pkg} may have failed"
