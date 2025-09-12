@@ -9,19 +9,20 @@ inputs:
 runs:
   using: "composite"
   steps:
-      - name: "Validate input"
-        shell: bash
-        run: |
-          echo "TODO"
+    - name: "Validate input"
+      shell: bash
+      run: |
+        echo "TODO"
 
-      - name: "Run tests"
-        run: |
-          $GAP -A <<GAPInput
-            success := true;
-            success := success and LoadPackage("PackageManager");
-            pkgs := SplitString("${{ inputs.packages }}");
-            for pkg in pkgs do
-                success := success and InstallPackage( pkg );
-            od;
-            QUIT_GAP(success);
-          GAPInput
+    - name: "Run tests"
+      shell: bash
+      run: |
+        $GAP -A <<GAPInput
+          success := true;
+          success := success and LoadPackage("PackageManager");
+          pkgs := SplitString("${{ inputs.packages }}");
+          for pkg in pkgs do
+              success := success and InstallPackage( pkg );
+          od;
+          QUIT_GAP(success);
+        GAPInput
