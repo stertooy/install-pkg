@@ -35,11 +35,10 @@ jobs:
       - uses: ./this-action/
         if: ${{ matrix.sep == 'space' }}
         with:
-          packages: 'utils https://github.com/gap-packages/sophus.git https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz'
+          packages: 'utils https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz'
       - uses: ./this-action/
         if: ${{ matrix.sep == 'newline' }}
         with:
           packages: |
             utils
-            https://github.com/gap-packages/sophus.git
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
