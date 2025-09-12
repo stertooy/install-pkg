@@ -1,0 +1,28 @@
+name: 'Run package tests'
+description: 'Run package tests'
+inputs:
+  packages:
+    description: 'Space-separated list of packages to install'
+    required: true
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+      - name: "Validate input"
+        shell: bash
+        run: |
+          echo "TODO"
+
+      - name: "Run tests"
+        run: |
+          $GAP -A <<GAPInput
+            success := true;
+            success := success and LoadPackage("PackageManager");
+            pkgs := SplitString("${{ inputs.packages }}");
+            for pkg in pkgs do
+                success := success and InstallPackage( pkg );
+            od;
+            QUIT_GAP(success);
+          GAPInput
+          
