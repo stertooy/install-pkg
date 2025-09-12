@@ -20,10 +20,21 @@ packages if needed.
 The following input is mandatory:
 
 - `packages`:
-  - 'Space-separated list of packages to install.
+  - Space-separated or newline-separated list of packages to install.
     Can be the name of the package, the link to a git repo (ending in `.git'`'), or
     the link to a release archive.
   - default: `'true'`
+ 
+The following inputs are all optional:
+
+- `ignore-errors`:
+  - Ignore errors raised by PackageManager. Can be of use when it
+    fails to build documentation that you don't need anyway.
+  - default: `'false'`
+- `use-latex`:
+  - Install and use LaTeX (only works on Linux).
+  - default: `'false'`
+
 
 ### What's new in v1
 
@@ -60,7 +71,7 @@ Please submit bug reports, suggestions for improvements and patches via
 the [issue tracker](https://github.com/gap-actions/install-pkg/issues).
 
 ## License
-The action `build-pkg` is free software; you can redistribute
+The action `install-pkg` is free software; you can redistribute
 and/or modify it under the terms of the GNU General Public License as published
 by the Free Software Foundation; either version 2 of the License, or (at your
 opinion) any later version. For details, see the file `LICENSE` distributed
