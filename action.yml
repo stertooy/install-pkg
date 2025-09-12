@@ -27,7 +27,7 @@ runs:
         error_found=false
         # Use `gap` instead of `$GAP` to avoid quitonbreak
         for pkg in $PKGS; do
-          if ! gap -A <<GAPInput
+          if ! gap -A <<-GAPInput
             LoadPackage("PackageManager");
             QUIT_GAP(InstallPackage("${pkg}"));
           GAPInput
@@ -38,7 +38,7 @@ runs:
         done
 
         # Exit unless ignore-errors is set to true
-        if "${{ inputs.ignore-errors }}"; then
+        if [ "${{ inputs.ignore-errors }}" != "true" ]; then
           exit 1
         fi
           
