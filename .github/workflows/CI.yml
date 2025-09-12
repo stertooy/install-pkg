@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: "Test on ${{ matrix.gap-version }}, ${{ inputs.use-latex }}, ${{ inputs.ignore-errors }}"
+    name: "Test on ${{ matrix.gap-version }}, ${{ matrix.use-latex }}, ${{ matrix.ignore-errors }}"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -25,7 +25,7 @@ jobs:
         ignore-errors: ["true","false"]
         exclude:
           - use-latex: "false"
-            ignore-errors: "true"
+            ignore-errors: "false"
           
     steps:
       - name: "Check out this repository"
