@@ -21,7 +21,7 @@ runs:
           success := true;
           success := success and LoadPackage("PackageManager");
           pkgs := """${{ inputs.packages }}""";
-          pkgList := SplitString(pkgList," \n");
+          pkgList := SplitString(pkgs," \n");
           for pkg in pkgList do
               success := success and InstallPackage( pkg );
           od;
