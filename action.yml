@@ -9,15 +9,19 @@ inputs:
     description: 'Ignore errors'
     required: false
     default: 'false'
+  use-latex:
+    description: "if true, then install and use latex (only works on Linux)"
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
   steps:
-    - name: "Validate input"
+    - name: "Install TeX Live"
+      if: ${{ inputs.use-latex == 'true' }}
       shell: bash
       run: |
-        echo "TODO"
-
+        sudo apt-get install --no-install-recommends texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
     - name: "Run tests"
       shell: bash
       run: |
