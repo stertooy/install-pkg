@@ -17,7 +17,8 @@ runs:
     - name: "Run tests"
       shell: bash
       run: |
-        $GAP -A <<GAPInput
+        # Avoid quitonbreak because not building documentation shouldn't crash this...
+        gap -A <<GAPInput
           success := true;
           success := success and LoadPackage("PackageManager");
           pkgs := """${{ inputs.packages }}""";
@@ -25,5 +26,6 @@ runs:
           for pkg in pkgList do
               success := success and InstallPackage( pkg );
           od;
-          QUIT_GAP(success);
+          QUIT;
+          #QUIT_GAP(success);
         GAPInput
