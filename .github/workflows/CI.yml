@@ -21,9 +21,18 @@ jobs:
           - '4.12'
           - '4.11'
           - '4.10'
-        sep:
-          - 'space'
-          - 'newline'
+        packages:
+          - 'https://github.com/gap-packages/sophus.git utils'
+          - |
+            utils
+            https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
+        use-latex: ["true","false"]
+        ignore-errors: ["true","false"]
+        exclude:
+          - packages: 'https://github.com/gap-packages/sophus.git utils'
+            use-latex: 'false'
+            ignore-errors: 'false'
+          
     steps:
       - name: "Check out this repository"
         uses: actions/checkout@v5
@@ -33,13 +42,8 @@ jobs:
         with:
           gap-version: ${{ matrix.gap-version }}
       - uses: ./this-action/
-        if: ${{ matrix.sep == 'space' }}
         with:
-          packages: 'utils https://github.com/gap-packages/sophus.git https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz'
-      - uses: ./this-action/
-        if: ${{ matrix.sep == 'newline' }}
-        with:
-          packages: |
-            utils
-            https://github.com/gap-packages/sophus.git
-            https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
+          packages: ${{ matrix.packages }}
+          use-latex: ${{ matrix.use-latex }}
+          ignore-errors: ${{ matrix.ignore-errors }}
+
