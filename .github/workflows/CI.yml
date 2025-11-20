@@ -67,8 +67,15 @@ jobs:
         with:
           gap-version: ${{ matrix.gap-version }}
       - uses: ./this-action/
+        if: ${{ matrix.os == 'macos-latest' }}
         with:
           packages: |
             https://github.com/gap-packages/sophus.git
             utils
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
+            https://github.com/gap-packages/numericalsgps/releases/download/v1.4.0/NumericalSgps-1.4.0.zip
+      - uses: ./this-action/
+        if: ${{ matrix.os == 'windows-latest' }}
+        with:
+          packages: |
+            https://github.com/gap-packages/numericalsgps/releases/download/v1.4.0/NumericalSgps-1.4.0.zip
