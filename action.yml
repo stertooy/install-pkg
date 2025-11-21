@@ -50,7 +50,7 @@ runs:
           if ! gap -A <<GAPInput
             LoadPackage("PackageManager");
 
-            if "${{ runner.os }}" = "Windows" then
+            if "${{ runner.os }}" = "DISABLED" then
               # Overwrite InstallPackageFromArchive
               MakeReadWriteGlobal("InstallPackageFromArchive");
               InstallPackageFromArchive := function( url )
