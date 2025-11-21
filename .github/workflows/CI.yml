@@ -11,7 +11,7 @@ jobs:
   test:
     name: "Test on ${{ matrix.gap-version }}, use-latex: ${{ matrix.use-latex }}, ignore-errors: ${{ matrix.ignore-errors }}"
     runs-on: ubuntu-latest
-    if: ${{ matrix.gap-version == "herpderp" }}
+    if: ${{ matrix.gap-version == 'herpderp' }}
     strategy:
       fail-fast: false
       matrix:
