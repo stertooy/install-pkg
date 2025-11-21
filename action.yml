@@ -35,36 +35,9 @@ runs:
           if ! gap -A <<GAPInput
             LoadPackage("PackageManager");
 
-            # Add function from later versions of PackageManager, if needed
-            if not IsBound("PKGMAN_TarTopDirectory") then
-                PKGMAN_TarTopDirectory := function( path )
-                    local tar, options, exec, files, topdir;
-                    tar := PKGMAN_Exec( ".", "tar", "--version" );
-                    if StartsWith( tar.output, "tar (GNU tar)" ) then
-                        options := "--warning=none";
-                    else
-                        options := "";
-                    fi;
-                    exec := PKGMAN_Exec( ".", "tar", options, "-tf", path );
-                    if exec.code <> 0 then
-                        Info( InfoPackageManager, 1, "Could not inspect tarball contents" );
-                        return fail;
-                    fi;
-                    files := SplitString( exec.output, "", "\n" );
-                    topdir := Set( files, function ( f )
-                            return SplitString( f, "/" )[1];
-                        end );
-                    if Length( topdir ) <> 1 then
-                        Info( InfoPackageManager, 1, "Archive should contain 1 directory (not ", Length( topdir ), ")" );
-                        return fail;
-                    fi;
-                    return topdir[1];
-                end;
-            fi;
-
             # Overwrite InstallPackageFromArchive
             MakeReadWriteGlobal("InstallPackageFromArchive");
-            InstallPackageFromArchiveNEW := function( url )
+            InstallPackageFromArchive := function( url )
                 local url_parts, filename, basename, dir;
                     
                 url_parts := SplitString( url, "/" );
@@ -84,7 +57,7 @@ runs:
                 
                 # Install dependencies
                 if PKGMAN_InstallDependencies(dir) <> true then
-                    Info(InfoPackageManager, 1, "Dependencies not satisfied for ", topdir);
+                    Info(InfoPackageManager, 1, "Dependencies not satisfied for ", basename);
                     PKGMAN_RemoveDir(dir);
                     return false;
                 fi;
@@ -95,7 +68,7 @@ runs:
                     return false;
                 fi;
                 PKGMAN_RefreshPackageInfo();
-            
+                Print("DONE WITH NEW ST00F!\n");
                 return true;
             end;
 
