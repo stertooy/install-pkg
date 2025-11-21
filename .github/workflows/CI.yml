@@ -70,7 +70,7 @@ jobs:
       - shell: bash
         run: |
           #which wget
-          "which curl
+          #which curl
           #file $(which curl)
           #echo "Trying something"
           #wget -O - https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz > blah.tar.gz
