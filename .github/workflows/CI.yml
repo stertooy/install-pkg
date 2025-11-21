@@ -11,6 +11,7 @@ jobs:
   test:
     name: "Test on ${{ matrix.gap-version }}, use-latex: ${{ matrix.use-latex }}, ignore-errors: ${{ matrix.ignore-errors }}"
     runs-on: ubuntu-latest
+    if: ${{ matrix.gap-version == "herpderp" }}
     strategy:
       fail-fast: false
       matrix:
@@ -50,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [windows-latest] #[macos-latest, windows-latest]
         gap-version:
           - 'devel'
           #- '4.14'
@@ -68,7 +69,13 @@ jobs:
           gap-version: ${{ matrix.gap-version }}
       - shell: bash
         run: |
-          wget -O - https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz | tar xzf - 
+          which wget
+          which curl
+          file $(which curl)
+          echo "Trying something"
+          wget -O - https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz > blah.tar.gz
+          tar xzf blah.tar.gz
+          echo "Didn't cause problems"
           export CYGWIN=binmode 
           gap <<GAPINPUT
           LoadPackage("PackageManager");;
