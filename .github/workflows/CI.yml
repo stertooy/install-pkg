@@ -11,6 +11,7 @@ jobs:
   test:
     name: "Test on ${{ matrix.gap-version }}, use-latex: ${{ matrix.use-latex }}, ignore-errors: ${{ matrix.ignore-errors }}"
     runs-on: ubuntu-latest
+    #if: ${{ github.repository == 'herpderp' }}
     strategy:
       fail-fast: false
       matrix:
@@ -43,3 +44,32 @@ jobs:
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
           use-latex: ${{ matrix.use-latex }}
           ignore-errors: ${{ matrix.ignore-errors }}
+
+  test-platforms:
+    name: "Test on ${{ matrix.os }}, GAP version ${{ matrix.gap-version }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+        gap-version:
+          - 'devel'
+          - '4.14'
+          - '4.10'
+          
+    steps:
+      - uses: gap-actions/setup-cygwin@v2
+        if: ${{ matrix.os == 'windows-latest' }}
+      - name: "Check out this repository"
+        uses: actions/checkout@v5
+        with:
+          path: this-action/
+      - uses: gap-actions/setup-gap@v3
+        with:
+          gap-version: ${{ matrix.gap-version }}
+      - uses: ./this-action/
+        with:
+          packages: |
+            https://github.com/gap-packages/sophus.git
+            utils
+            https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
