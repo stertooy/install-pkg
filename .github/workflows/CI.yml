@@ -59,13 +59,6 @@ jobs:
     steps:
       - uses: gap-actions/setup-cygwin@v2
         if: ${{ matrix.os == 'windows-latest' }}
-      - shell: bash
-        run: |
-          locale
-          wget https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
-          ls -a
-          tar xf grpconst-2.6.2.tar.gz
-          ls -a
       - name: "Check out this repository"
         uses: actions/checkout@v5
         with:
@@ -76,10 +69,13 @@ jobs:
       - shell: bash
         run: |
           gap <<GAPINPUT
-          LoadPackage("PackageManager");
-          Print(PKGMAN_DownloadCmds);
+          LoadPackage("PackageManager");;
+          path := PKGMAN_DownloadUrlToTemPFile("https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz");;
+          Print(path);
+          PKGMAN_Exec(".", "mv", path, "./archive.tar.gz");
           quit;
           GAPINPUT
+          tar -xzf archive.tar.gz
       - uses: ./this-action/
         with:
           packages: |
