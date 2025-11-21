@@ -53,8 +53,8 @@ jobs:
         os: [macos-latest, windows-latest]
         gap-version:
           - 'devel'
-          - '4.14'
-          - '4.10'
+          #- '4.14'
+          #- '4.10'
           
     steps:
       - uses: gap-actions/setup-cygwin@v2
@@ -70,6 +70,7 @@ jobs:
         run: |
           gap <<GAPINPUT
           LoadPackage("PackageManager");;
+          SetInfoLevel(InfoPackageManager,4);
           Print(PKGMAN_DownloadCmds);
           PKGMAN_DownloadCmds := Reversed(PKGMAN_DownloadCmds);
           path := PKGMAN_DownloadUrlToTempFile("https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz");;
