@@ -69,14 +69,15 @@ jobs:
           gap-version: ${{ matrix.gap-version }}
       - shell: bash
         run: |
-          which wget
-          which curl
-          file $(which curl)
-          echo "Trying something"
-          wget -O - https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz > blah.tar.gz
-          tar xzf blah.tar.gz
-          echo "Didn't cause problems"
-          export CYGWIN=binmode 
+          #which wget
+          "which curl
+          #file $(which curl)
+          #echo "Trying something"
+          #wget -O - https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz > blah.tar.gz
+          #tar xzf blah.tar.gz
+          #echo "Didn't cause problems"
+          #export CYGWIN=binmode 
+          echo "" > ./archive.tar.gz
           gap <<GAPINPUT
           LoadPackage("PackageManager");;
           SetInfoLevel(InfoPackageManager,4);
@@ -84,7 +85,7 @@ jobs:
           #PKGMAN_DownloadCmds := Reversed(PKGMAN_DownloadCmds);
           path := PKGMAN_DownloadUrlToTempFile("https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz");;
           Print(path);
-          PKGMAN_Exec(".", "mv", path, "./archive.tar.gz");
+          PKGMAN_Exec(".", "cat", path, ">> ./archive.tar.gz");
           quit;
           GAPINPUT
           file -i archive.tar.gz
