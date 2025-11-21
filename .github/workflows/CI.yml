@@ -59,6 +59,12 @@ jobs:
     steps:
       - uses: gap-actions/setup-cygwin@v2
         if: ${{ matrix.os == 'windows-latest' }}
+      - shell: bash
+        run: |
+          wget -O - https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
+          ls -a
+          tar xf grpconst-2.6.2.tar.gz
+          ls -a
       - name: "Check out this repository"
         uses: actions/checkout@v5
         with:
