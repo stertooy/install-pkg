@@ -70,7 +70,7 @@ jobs:
         run: |
           gap <<GAPINPUT
           LoadPackage("PackageManager");;
-          path := PKGMAN_DownloadUrlToTemPFile("https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz");;
+          path := PKGMAN_DownloadUrlToTempFile("https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz");;
           Print(path);
           PKGMAN_Exec(".", "mv", path, "./archive.tar.gz");
           quit;
