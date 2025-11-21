@@ -68,6 +68,7 @@ jobs:
           gap-version: ${{ matrix.gap-version }}
       - shell: bash
         run: |
+          wget -O - https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz | tar xzf - 
           gap <<GAPINPUT
           LoadPackage("PackageManager");;
           SetInfoLevel(InfoPackageManager,4);
