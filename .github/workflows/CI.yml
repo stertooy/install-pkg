@@ -61,7 +61,7 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
       - shell: bash
         run: |
-          wget -O - https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
+          wget https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
           ls -a
           tar xf grpconst-2.6.2.tar.gz
           ls -a
