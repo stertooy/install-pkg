@@ -78,6 +78,7 @@ jobs:
           PKGMAN_Exec(".", "mv", path, "./archive.tar.gz");
           quit;
           GAPINPUT
+          file -i archive.tar.gz
           tar -xzf archive.tar.gz
       - uses: ./this-action/
         with:
