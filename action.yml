@@ -17,13 +17,28 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: "Validate input"
+      shell: bash
+      run: |
+        validate_boolean() {
+          local input=$1
+          local option_name=$2
+          if ! [[ "$input" =~ ^(true|false)$ ]]; then
+            echo "::error::Invalid value for option $option_name. Expected 'true' or 'false', but found '$input'"
+            exit 1;
+          fi
+        }
+
+        validate_boolean "${{ inputs.ignore-errors }}" ignore-errors
+        validate_boolean "${{ inputs.use-latex }}" use-latex
+
     - name: "Install TeX Live"
       if: ${{ inputs.use-latex == 'true' }}
       shell: bash
       run: |
         sudo apt-get install --no-install-recommends texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
 
-    - name: "Run tests"
+    - name: "Install packages"
       shell: bash
       run: |
         # Convert newlines to spaces
@@ -35,44 +50,42 @@ runs:
           if ! gap -A <<GAPInput
             LoadPackage("PackageManager");
 
-            # Overwrite InstallPackageFromArchive
-            MakeReadWriteGlobal("InstallPackageFromArchive");
-            InstallPackageFromArchive := function( url )
+            if "${{ runner.os }}" = "Windows" then
+              # Overwrite InstallPackageFromArchive
+              MakeReadWriteGlobal("InstallPackageFromArchive");
+              InstallPackageFromArchive := function( url )
                 local url_parts, filename, basename, dir;
-                    
+
+                # Download and extract url
                 url_parts := SplitString( url, "/" );
                 filename := url_parts[Length( url_parts )];
                 basename := filename{[1..Length(filename)-7]}; # remove .tar.gz
-                
-            
                 Exec(Concatenation(
-                    "wget -O - ",
-                    url,
-                    " | tar -xzf - -C ",
-                    PKGMAN_PackageDir(  )
-                ) );
-            
-            
+                  "wget -O - ",
+                  url,
+                  " | tar -xzf - -C ",
+                  PKGMAN_PackageDir()
+                ));
                 dir := Filename( Directory( PKGMAN_PackageDir() ), basename );
-                
+
                 # Install dependencies
                 if PKGMAN_InstallDependencies(dir) <> true then
-                    Info(InfoPackageManager, 1, "Dependencies not satisfied for ", basename);
-                    PKGMAN_RemoveDir(dir);
-                    return false;
+                  Info(InfoPackageManager, 1, "Dependencies not satisfied for ", basename);
+                  PKGMAN_RemoveDir(dir);
+                  return false;
                 fi;
-            
+
                 # Check validity
                 if PKGMAN_CheckPackage(dir) = false then
-                    PKGMAN_RemoveDir(dir);
-                    return false;
+                  PKGMAN_RemoveDir(dir);
+                  return false;
                 fi;
                 PKGMAN_RefreshPackageInfo();
-                Print("DONE WITH NEW ST00F!\n");
                 return true;
-            end;
+              end;
+            fi;
 
-            QUIT_GAP(InstallPackage("${pkg}"));
+          QUIT_GAP(InstallPackage("${pkg}"));
         GAPInput
           then
             error_found=true
