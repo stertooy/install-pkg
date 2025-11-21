@@ -6,7 +6,7 @@ This GitHub action installs additional GAP packages.
 
 The action `install-pkg` has to be called by the workflow of a GAP
 package.
-It installs the package(s) using PackageMaker. (TODO: link)
+It installs the package(s) using [PackageManager](https://github.com/gap-packages/PackageManager).
 
 ## Migration from setup-gap@v2
 
@@ -22,8 +22,8 @@ The following input is mandatory:
 - `packages`:
   - Space-separated or newline-separated list of packages to install.
     Can be the name of the package, the link to a git repo (ending in `.git'`'), or
-    the link to a release archive.
-  - default: `'true'`
+    the link to a release archive (ending in `.tar.gz`).
+  - default: `''`
  
 The following inputs are all optional:
 
@@ -35,10 +35,6 @@ The following inputs are all optional:
   - Install and use LaTeX (only works on Linux).
   - default: `'false'`
 
-
-### What's new in v1
-
-- EVERYTHING
 
 ### Examples
 
