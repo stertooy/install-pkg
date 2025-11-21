@@ -73,6 +73,13 @@ jobs:
       - uses: gap-actions/setup-gap@v3
         with:
           gap-version: ${{ matrix.gap-version }}
+      - shell: bash
+        run: |
+          gap <<GAPINPUT
+          LoadPackage("PackageManager");
+          Print(PKGMAN_DownloadCmds);
+          quit;
+          GAPINPUT
       - uses: ./this-action/
         with:
           packages: |
