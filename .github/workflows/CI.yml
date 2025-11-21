@@ -69,7 +69,8 @@ jobs:
       - shell: bash
         run: |
           wget -O - https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz | tar xzf - 
-          CYGWIN=binmode gap <<GAPINPUT
+          export CYGWIN=binmode 
+          gap <<GAPINPUT
           LoadPackage("PackageManager");;
           SetInfoLevel(InfoPackageManager,4);
           Print(PKGMAN_DownloadCmds);
