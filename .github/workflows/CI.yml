@@ -81,7 +81,7 @@ jobs:
           LoadPackage("PackageManager");;
           SetInfoLevel(InfoPackageManager,4);
           Print(PKGMAN_DownloadCmds);
-          PKGMAN_DownloadCmds := Reversed(PKGMAN_DownloadCmds);
+          #PKGMAN_DownloadCmds := Reversed(PKGMAN_DownloadCmds);
           path := PKGMAN_DownloadUrlToTempFile("https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz");;
           Print(path);
           PKGMAN_Exec(".", "mv", path, "./archive.tar.gz");
