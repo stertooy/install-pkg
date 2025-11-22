@@ -8,42 +8,6 @@ on:
   pull_request:
 
 jobs:
-  test:
-    name: "Test on ${{ matrix.gap-version }}, use-latex: ${{ matrix.use-latex }}, ignore-errors: ${{ matrix.ignore-errors }}"
-    runs-on: ubuntu-latest
-    #if: ${{ github.repository == 'herpderp' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        gap-version:
-          - 'devel'
-          - '4.14'
-          - '4.13'
-          - '4.12'
-          - '4.11'
-          - '4.10'
-        use-latex: ["true","false"]
-        ignore-errors: ["true","false"]
-        exclude:
-          - use-latex: "false"
-            ignore-errors: "false"
-          
-    steps:
-      - name: "Check out this repository"
-        uses: actions/checkout@v5
-        with:
-          path: this-action/
-      - uses: gap-actions/setup-gap@v3
-        with:
-          gap-version: ${{ matrix.gap-version }}
-      - uses: ./this-action/
-        with:
-          packages: |
-            https://github.com/gap-packages/sophus.git
-            utils
-            https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
-          use-latex: ${{ matrix.use-latex }}
-          ignore-errors: ${{ matrix.ignore-errors }}
 
   test-platforms:
     name: "Test on ${{ matrix.os }}, GAP version ${{ matrix.gap-version }}"
@@ -51,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [windows-latest]
         gap-version:
           - 'devel'
           - '4.14'
@@ -60,16 +24,34 @@ jobs:
     steps:
       - uses: gap-actions/setup-cygwin@v2
         if: ${{ matrix.os == 'windows-latest' }}
-      - name: "Check out this repository"
-        uses: actions/checkout@v5
-        with:
-          path: this-action/
+
       - uses: gap-actions/setup-gap@v3
         with:
           gap-version: ${{ matrix.gap-version }}
-      - uses: ./this-action/
-        with:
-          packages: |
-            https://github.com/gap-packages/sophus.git
-            utils
-            https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
+      - shell: bash
+        run: |
+          wget https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz -O archive-1.tar.gz
+          gap -A <<GAPINPUT
+          LoadPackage("PackageManager":OnlyNeeded);;
+          url := "https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz";;
+          tool := [ "wget", [ "--quiet", "-O", "-" ] ];;
+          exec := CallFuncList( PKGMAN_Exec, Concatenation( [ "." ], [ tool[1] ], tool[2], [ url ] ) );;
+          Print( "Exit code: ", exec.code, "\n" );
+          result := exec.output;;
+          path := Filename( DirectoryCurrent(), "archive-2.tar.gz" );;
+          FileString( path, result );;
+          GAPINPUT
+
+          gzip -t archive-1.tar.gz && echo "gzip OK" || echo "gzip CORRUPT"
+          file archive-1.tar.gz || true
+          xxd -l 8 -g 1 archive-1.tar.gz || true
+          tr -cd '\r' < archive-1.tar.gz | wc -c || true
+          ls -lh archive-1.tar.gz || true
+
+          gzip -t archive-2.tar.gz && echo "gzip OK" || echo "gzip CORRUPT"
+          file archive-2.tar.gz || true
+          xxd -l 8 -g 1 archive-2.tar.gz || true
+          tr -cd '\r' < archive-2.tar.gz | wc -c || true
+          ls -lh archive-2.tar.gz || true
+
+            
