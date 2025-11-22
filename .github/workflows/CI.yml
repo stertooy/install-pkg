@@ -12,6 +12,8 @@ jobs:
   test-platforms:
     name: "Test on ${{ matrix.os }}, GAP version ${{ matrix.gap-version }}"
     runs-on: ${{ matrix.os }}
+    env:
+      CYGWIN: binmode   # force binary I/O under Cygwin
     strategy:
       fail-fast: false
       matrix:
@@ -54,4 +56,13 @@ jobs:
           tr -cd '\r' < archive-2.tar.gz | wc -c || true
           ls -lh archive-2.tar.gz || true
 
-            
+          # Show first differing byte positions and values (octal)
+          cmp -l archive-1.tar.gz archive-2.tar.gz | head
+          
+          # Show summary checksums
+          sha256sum archive-1.tar.gz archive-2.tar.gz
+          
+          # Show gzip metadata & CRCs (the last column is CRC32 of the uncompressed data)
+          gzip -l archive-1.tar.gz
+          gzip -l archive-2.tar.gz
+
