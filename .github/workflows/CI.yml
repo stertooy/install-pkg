@@ -33,6 +33,17 @@ jobs:
       - shell: bash
         run: |
           wget https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz -O archive-1.tar.gz
+
+          
+          export CYGWIN="binmode disable_pcon"   # disable_pcon is documented in Cygwin.  <-- key
+          # If we *do* have a tty, kill CR/LF translations on it (belt‑and‑suspenders).
+          if tty >/dev/null 2>&1; then
+            stty -icrnl -inlcr -onlcr -echo   # avoid CR↔LF translation on input/output
+          fi
+          
+          # Run GAP *without* a controlling terminal so its child (wget) uses a raw pipe.
+          # Replace the here-doc with your actual GAP script; this is your example, unchanged.
+          setsid -w bash -lc '
           gap -A <<GAPINPUT
           LoadPackage("PackageManager":OnlyNeeded);;
           url := "https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz";;
@@ -43,6 +54,7 @@ jobs:
           path := Filename( DirectoryCurrent(), "archive-2.tar.gz" );;
           FileString( path, result );;
           GAPINPUT
+          '
 
           gzip -t archive-1.tar.gz && echo "gzip OK" || echo "gzip CORRUPT"
           file archive-1.tar.gz || true
