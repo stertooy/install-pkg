@@ -51,7 +51,7 @@ jobs:
           exec := CallFuncList( PKGMAN_Exec, Concatenation( [ "." ], [ tool[1] ], tool[2], [ url ] ) );;
           Print( "Exit code: ", exec.code, "\n" );
           result := exec.output;;
-          path := Filename( DirectoryCurrent(), "archive-2.tar.gz" );
+          path := Filename( Directory("$PWD"), "archive-2.tar.gz" );
           FileString( path, result );
           GAPINPUT
           '
