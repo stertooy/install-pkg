@@ -33,7 +33,8 @@ jobs:
       - shell: bash
         run: |
           wget https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz -O archive-1.tar.gz
-
+          echo $PWD
+          gap -A -c 'Print(DirectoryCurrent());quit;'
           
           export CYGWIN="binmode disable_pcon"   # disable_pcon is documented in Cygwin.  <-- key
           # If we *do* have a tty, kill CR/LF translations on it (belt‑and‑suspenders).
