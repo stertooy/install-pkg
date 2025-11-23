@@ -2,6 +2,12 @@
 
 This GitHub action installs additional GAP packages.
 
+## Supported OSes
+
+This action can be run on macOS and Ubuntu. There is some support for Windows (through the
+`setup-cygwin` action), but this should be considered experimental.
+
+
 ## Usage
 
 The action `install-pkg` has to be called by the workflow of a GAP
