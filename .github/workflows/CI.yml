@@ -38,6 +38,7 @@ jobs:
           export CYGWIN="binmode disable_pcon"   # disable_pcon is documented in Cygwin.  <-- key
           # If we *do* have a tty, kill CR/LF translations on it (belt‑and‑suspenders).
           if tty >/dev/null 2>&1; then
+            echo "TTY FIX"
             stty -icrnl -inlcr -onlcr -echo   # avoid CR↔LF translation on input/output
           fi
           
@@ -53,6 +54,7 @@ jobs:
           result := exec.output;;
           path := Filename( Directory("$PWD"), "archive-2.tar.gz" );
           FileString( path, result );
+          Print(PKGMAN_PackageDir(),"\n");
           GAPINPUT
           '
 
