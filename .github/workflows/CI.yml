@@ -36,7 +36,11 @@ jobs:
           echo "----------------------------------"
           echo $PWD
           echo "----------------------------------"
-          gap -A -c 'Print(DirectoryCurrent());quit;'
+          gap -A <<EOF
+          Print("Curr dir: \n");
+          Print(DirectoryCurrent(),"\n");
+          quit;
+          EOF
           echo "----------------------------------"
           export CYGWIN="binmode disable_pcon"   # disable_pcon is documented in Cygwin.  <-- key
           # If we *do* have a tty, kill CR/LF translations on it (belt‑and‑suspenders).
@@ -56,7 +60,7 @@ jobs:
           exec := CallFuncList( PKGMAN_Exec, Concatenation( [ "." ], [ tool[1] ], tool[2], [ url ] ) );;
           Print( "Exit code: ", exec.code, "\n" );
           result := exec.output;;
-          path := Filename( Directory("$PWD"), "archive-2.tar.gz" );
+          path := Filename( Directory("/cygdrive/d/a/install-pkg/install-pkg/"), "archive-2.tar.gz" );
           FileString( path, result );
           Print(PKGMAN_PackageDir(),"\n");
           GAPINPUT
