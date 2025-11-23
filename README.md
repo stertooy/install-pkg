@@ -7,12 +7,13 @@ This GitHub action installs additional GAP packages.
 The action `install-pkg` has to be called by the workflow of a GAP
 package.
 It installs the package(s) using [PackageManager](https://github.com/gap-packages/PackageManager).
+This also means that PackageManager will automatically take care of unmet dependencies
+and will build package(s) if needed.
 
 ## Migration from setup-gap@v2
 
-This package is intended to replace the `gap-pkgs-to-clone` input, though with some
-notable changes. PackageManager will also build the package, and install other
-packages if needed.
+This package is intended to replace the `GAP_PKGS_TO_CLONE` and `GAP_PKGS_TO_BUILD` inputs,
+though with some notable changes.
 
 
 ### Inputs
