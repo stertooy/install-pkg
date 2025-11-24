@@ -34,6 +34,8 @@ jobs:
         run: |
           wget "https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz" -O "archive-1.tar.gz"
 
+          echo $PWD
+
           /cygdrive/c/cygwin64/bin/bash.exe --login --norc -e -o pipefail -c '
           gap -A <<GAPINPUT
           LoadPackage("PackageManager":OnlyNeeded);;
@@ -42,7 +44,7 @@ jobs:
           exec := CallFuncList( PKGMAN_Exec, Concatenation( [ "." ], [ tool[1] ], tool[2], [ url ] ) );;
           Print( "Exit code: ", exec.code, "\n" );
           result := exec.output;;
-          path := Filename( DirectoryCurrent(), "archive-2.tar.gz" );
+          path := Filename( Directory("/cygdrive/c/"), "archive-2.tar.gz" );
           FileString( path, result );
           GAPINPUT
           '
