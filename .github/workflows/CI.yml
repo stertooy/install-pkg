@@ -30,29 +30,10 @@ jobs:
       - uses: gap-actions/setup-gap@v3
         with:
           gap-version: ${{ matrix.gap-version }}
-      - shell: bash
+      - shell: C:\cygwin64\bin\bash.exe --login --norc -e -o pipefail '{0}'
         run: |
           wget https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz -O archive-1.tar.gz
-          echo "----------------------------------"
-          echo $PWD
-          echo "----------------------------------"
-          gap -A <<EOF
-          Print("Curr dir: \n");
-          Print(DirectoryCurrent(),"\n");
-          quit;
-          EOF
-          echo "----------------------------------"
-          export CYGWIN="binmode disable_pcon"   # disable_pcon is documented in Cygwin.  <-- key
-          # If we *do* have a tty, kill CR/LF translations on it (belt‑and‑suspenders).
-          if tty >/dev/null 2>&1; then
-            echo "TTY FIX"
-            stty -icrnl -inlcr -onlcr -echo   # avoid CR↔LF translation on input/output
-          fi
-          echo "----------------------------------"
-          
-          # Run GAP *without* a controlling terminal so its child (wget) uses a raw pipe.
-          # Replace the here-doc with your actual GAP script; this is your example, unchanged.
-          setsid -w bash -lc '
+
           gap -A <<GAPINPUT
           LoadPackage("PackageManager":OnlyNeeded);;
           url := "https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz";;
@@ -60,11 +41,11 @@ jobs:
           exec := CallFuncList( PKGMAN_Exec, Concatenation( [ "." ], [ tool[1] ], tool[2], [ url ] ) );;
           Print( "Exit code: ", exec.code, "\n" );
           result := exec.output;;
-          path := Filename( Directory("/cygdrive/d/a/install-pkg/install-pkg/"), "archive-2.tar.gz" );
+          path := Filename( DirectoryCurrent(), "archive-2.tar.gz" );
           FileString( path, result );
-          Print(PKGMAN_PackageDir(),"\n");
           GAPINPUT
-          '
+
+          ls -a
 
           gzip -t archive-1.tar.gz && echo "gzip OK" || echo "gzip CORRUPT"
           file archive-1.tar.gz || true
