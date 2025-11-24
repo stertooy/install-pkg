@@ -44,7 +44,7 @@ jobs:
           exec := CallFuncList( PKGMAN_Exec, Concatenation( [ "." ], [ tool[1] ], tool[2], [ url ] ) );;
           Print( "Exit code: ", exec.code, "\n" );
           result := exec.output;;
-          path := Filename( Directory("/cygdrive/c/"), "archive-2.tar.gz" );
+          path := Filename( Directory("/cygdrive/d/a/install-pkg/install-pkg"), "archive-2.tar.gz" );
           FileString( path, result );
           GAPINPUT
           '
