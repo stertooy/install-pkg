@@ -30,7 +30,7 @@ jobs:
       - uses: gap-actions/setup-gap@v3
         with:
           gap-version: ${{ matrix.gap-version }}
-      - shell: C:\cygwin64\bin\bash.exe --login --norc -e -o pipefail '{0}'
+      - shell: C:\cygwin64\bin\bash.exe --login --norc -e -o pipefail --igncr '{0}'
         run: |
           wget https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz -O archive-1.tar.gz
 
