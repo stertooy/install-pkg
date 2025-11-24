@@ -30,10 +30,11 @@ jobs:
       - uses: gap-actions/setup-gap@v3
         with:
           gap-version: ${{ matrix.gap-version }}
-      - shell: C:\cygwin64\bin\bash.exe --login --norc -e -o pipefail '{0}' # -o igncr
+      - shell: bash
         run: |
           wget "https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz" -O "archive-1.tar.gz"
 
+          C:\cygwin64\bin\bash.exe --login --norc -e -o pipefail '
           gap -A <<GAPINPUT
           LoadPackage("PackageManager":OnlyNeeded);;
           url := "https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz";;
@@ -44,7 +45,8 @@ jobs:
           path := Filename( DirectoryCurrent(), "archive-2.tar.gz" );
           FileString( path, result );
           GAPINPUT
-
+          '
+          
           ls -a
 
           gzip -t archive-1.tar.gz && echo "gzip OK" || echo "gzip CORRUPT"
