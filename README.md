@@ -4,8 +4,9 @@ This GitHub action installs additional GAP packages.
 
 ## Supported OSes
 
-This action can be run on macOS and Ubuntu. There is some support for Windows (through the
-`setup-cygwin` action), but this should be considered experimental.
+This action can be run on Ubuntu. There is some support for macOS and Windows (through the
+`setup-cygwin` action), but this should be considered experimental and is only expected to
+work properly for recent versions of GAP (>= 4.14).
 
 
 ## Usage
@@ -15,6 +16,19 @@ package.
 It installs the package(s) using [PackageManager](https://github.com/gap-packages/PackageManager).
 This also means that PackageManager will automatically take care of unmet dependencies
 and will build package(s) if needed.
+
+You can tell PackageManager which packages to install using three different formats:
+ - the name of the package,
+ - the link to a release archive (ending in `.tar.gz` or `.tar.bz2`),
+ - the link to the git repo (ending in `.git'`').
+
+With the first option, PackageManager will download the latest release of the specified package.
+With the second option, PackageManager will download the specified archive. This is useful if you
+need an exact version of a particular package.
+With the third option, PackageManager will clone the default branch of the specified repository,
+and then attempt to build the documentation. You will likely have to set either `use-latex` or
+`ignore-errors` to `true` in this case.
+
 
 ## Migration from setup-gap@v2
 
@@ -61,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: gap-actions/setup-gap@v3
       - uses: gap-actions/install-pkg@v1
         with:
