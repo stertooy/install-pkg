@@ -4,7 +4,6 @@ inputs:
   packages:
     description: 'Space-separated list of packages to install'
     required: true
-    default: ''
   ignore-errors:
     description: 'Ignore errors when installing'
     required: false
