@@ -74,4 +74,4 @@ jobs:
             https://github.com/gap-packages/sophus.git
             utils
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
-            https://github.com/gap-packages/anupq/releases/download/v3.3.3/anupq-3.3.3.tar.bz2
+            https://github.com/gap-packages/io/releases/download/v4.9.3/io-4.9.3.tar.gz
