@@ -72,7 +72,7 @@ runs:
                   "wget -O - ",
                   url,
                   " | tar -x",
-                  tarflags,
+                  tarmode,
                   "f - -C ",
                   PKGMAN_PackageDir()
                 ));
