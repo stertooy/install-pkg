@@ -2,17 +2,24 @@
 
 This GitHub action installs additional GAP packages.
 
+## Supported OSes
+
+This action can be run on macOS and Ubuntu. There is some support for Windows (through the
+`setup-cygwin` action), but this should be considered experimental.
+
+
 ## Usage
 
 The action `install-pkg` has to be called by the workflow of a GAP
 package.
-It installs the package(s) using PackageMaker. (TODO: link)
+It installs the package(s) using [PackageManager](https://github.com/gap-packages/PackageManager).
+This also means that PackageManager will automatically take care of unmet dependencies
+and will build package(s) if needed.
 
 ## Migration from setup-gap@v2
 
-This package is intended to replace the `gap-pkgs-to-clone` input, though with some
-notable changes. PackageManager will also build the package, and install other
-packages if needed.
+This package is intended to replace the `GAP_PKGS_TO_CLONE` and `GAP_PKGS_TO_BUILD` inputs,
+though with some notable changes.
 
 
 ### Inputs
@@ -22,8 +29,8 @@ The following input is mandatory:
 - `packages`:
   - Space-separated or newline-separated list of packages to install.
     Can be the name of the package, the link to a git repo (ending in `.git'`'), or
-    the link to a release archive.
-  - default: `'true'`
+    the link to a release archive (ending in `.tar.gz`).
+  - default: `''`
  
 The following inputs are all optional:
 
@@ -35,10 +42,6 @@ The following inputs are all optional:
   - Install and use LaTeX (only works on Linux).
   - default: `'false'`
 
-
-### What's new in v1
-
-- EVERYTHING
 
 ### Examples
 
