@@ -28,9 +28,8 @@ The following input is mandatory:
 
 - `packages`:
   - Space-separated or newline-separated list of packages to install.
-    Can be the name of the package, the link to a git repo (ending in `.git'`'), or
-    the link to a release archive (ending in `.tar.gz`).
-  - default: `''`
+    Can be the name of the package, the link to a git repo (ending in `.git'`'),
+    or the link to a release archive (ending in `.tar.gz` or `.tar.bz2`).
  
 The following inputs are all optional:
 

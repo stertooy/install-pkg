@@ -30,7 +30,7 @@ jobs:
           
     steps:
       - name: "Check out this repository"
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: this-action/
       - uses: gap-actions/setup-gap@v3
@@ -42,6 +42,7 @@ jobs:
             https://github.com/gap-packages/sophus.git
             utils
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
+            https://github.com/gap-packages/anupq/releases/download/v3.3.3/anupq-3.3.3.tar.bz2
           use-latex: ${{ matrix.use-latex }}
           ignore-errors: ${{ matrix.ignore-errors }}
 
@@ -54,14 +55,14 @@ jobs:
         os: [macos-latest, windows-latest]
         gap-version:
           - 'devel'
+          - '4.15'
           - '4.14'
-          - '4.10'
           
     steps:
       - uses: gap-actions/setup-cygwin@v2
         if: ${{ matrix.os == 'windows-latest' }}
       - name: "Check out this repository"
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: this-action/
       - uses: gap-actions/setup-gap@v3
@@ -73,3 +74,4 @@ jobs:
             https://github.com/gap-packages/sophus.git
             utils
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
+            https://github.com/gap-packages/anupq/releases/download/v3.3.3/anupq-3.3.3.tar.bz2
