@@ -95,6 +95,9 @@ runs:
               end;
             fi;
 
+          Print(PKGMAN_Exec,"\n");
+          Print("      \n");
+
           QUIT_GAP(InstallPackage("${pkg}"));
         GAPInput
           then
