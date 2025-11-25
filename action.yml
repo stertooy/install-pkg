@@ -53,20 +53,27 @@ runs:
               # Overwrite InstallPackageFromArchive
               MakeReadWriteGlobal("InstallPackageFromArchive");
               InstallPackageFromArchive := function( url )
-                local url_parts, filename, ext, basename, dir;
+                local url_parts, filename, basename, tarmode, dir;
 
                 # Download and extract url
                 url_parts := SplitString( url, "/" );
                 filename := url_parts[Length( url_parts )];
-                for ext in PKGMAN_ArchiveFormats do
-                  if EndsWith( filename, ext ) then
-                    basename := filename{[1..Length(filename)-Length(ext)]};
-                  fi;
-                od;
+                if EndsWith( filename, ".tar.gz" ) then
+                  basename := filename{[1..Length(filename)-7]};
+                  tarmode := "z";
+                elif EndsWith( filename, ".tar.bz2" ) then
+                  basename := filename{[1..Length(filename)-8]};
+                  tarmode := "j";
+                else
+                  Exec("echo \"::error::Unsupported archive format\"");
+                  FORCE_QUIT_GAP(1);
+                fi;
                 Exec(Concatenation(
                   "wget -O - ",
                   url,
-                  " | tar -xf - -C ",
+                  " | tar -x",
+                  tarflags,
+                  "f - -C ",
                   PKGMAN_PackageDir()
                 ));
                 dir := Filename( Directory( PKGMAN_PackageDir() ), basename );
