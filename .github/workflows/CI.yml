@@ -57,10 +57,6 @@ jobs:
           - 'devel'
           - '4.15'
           - '4.14'
-          - '4.13'
-          - '4.12'
-          - '4.11'
-          - '4.10'
           
     steps:
       - uses: gap-actions/setup-cygwin@v2
