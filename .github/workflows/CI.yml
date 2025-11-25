@@ -56,7 +56,7 @@ jobs:
         gap-version:
           - 'devel'
           - '4.14'
-          - '4.10'
+          - '4.12'
           
     steps:
       - uses: gap-actions/setup-cygwin@v2
