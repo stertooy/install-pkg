@@ -33,6 +33,6 @@ jobs:
       - uses: ./this-action/
         with:
           packages: |
-            gap-packages/sophus
+            gap-packages/AutoDoc
             utils
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
