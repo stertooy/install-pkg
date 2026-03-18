@@ -95,20 +95,61 @@ runs:
 
         ############################################
         install_from_repo() {
+        
           repo="$1"
-          version="${2:-}"
-
+          version="$2"
+        
           if [ -z "$version" ]; then
-            tag=$(github_latest_tag "$repo")
+        
+            echo "Fetching latest release for $repo"
+        
+            wget -qO "$TMPDIR/release.json" \
+              "https://api.github.com/repos/$repo/releases/latest"
+        
+            tag=$(jq -r '.tag_name' "$TMPDIR/release.json")
+        
           else
-            tag=$(find_release_for_version "$repo" "$version")
+        
+            echo "Finding release >= $version for $repo"
+        
+            wget -qO "$TMPDIR/releases.json" \
+              "https://api.github.com/repos/$repo/releases"
+        
+            tag=$(jq -r '.[].tag_name' "$TMPDIR/releases.json" \
+              | sed 's/^v//' \
+              | sort -V \
+              | awk -v v="$version" '$0>=v {print; exit}')
+        
+            if [ -z "$tag" ]; then
+              echo "No release >= $version found"
+              exit 1
+            fi
+        
+            tag="v$tag"
+        
+            wget -qO "$TMPDIR/release.json" \
+              "https://api.github.com/repos/$repo/releases/tags/$tag"
+        
           fi
-
+        
           echo "Using release $tag"
-
-          info_url="https://raw.githubusercontent.com/$repo/$tag/package-info.json"
-
-          resolve_package_info "$info_url"
+        
+          asset_url=$(jq -r '
+            .assets[]
+            | select(.name=="package-info.json")
+            | .browser_download_url
+          ' "$TMPDIR/release.json")
+        
+          if [ -z "$asset_url" ] || [ "$asset_url" = "null" ]; then
+            echo "Release does not contain package-info.json asset"
+            exit 1
+          fi
+        
+          echo "Downloading package-info.json"
+        
+          wget -qO "$TMPDIR/package-info.json" "$asset_url"
+        
+          resolve_package_info "$TMPDIR/package-info.json"
         }
 
         ############################################
