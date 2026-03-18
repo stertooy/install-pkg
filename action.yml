@@ -22,6 +22,8 @@ runs:
         TMPDIR=$(mktemp -d)
         PKG_DISTRO="$TMPDIR/package-infos.json"
 
+        WGET="wget --header=\"Authorization: Bearer $GITHUB_TOKEN\""
+
         ############################################
         download_and_extract() {
           url="$1"
@@ -29,7 +31,7 @@ runs:
 
           echo "Downloading $url"
 
-          wget -O "$archive" "$url"
+          $WGET -O "$archive" "$url"
 
           case "$url" in
             *.tar.gz)  tar -xzf "$archive" -C "$DEST" ;;
@@ -82,14 +84,14 @@ runs:
         ############################################
         github_latest_tag() {
           repo="$1"
-          wget -O- "https://api.github.com/repos/$repo/releases/latest" \
+          $WGET -O- "https://api.github.com/repos/$repo/releases/latest" \
             | jq -r '.tag_name'
         }
 
         ############################################
         github_release_tags() {
           repo="$1"
-          wget -O- "https://api.github.com/repos/$repo/releases" \
+          $WGET -O- "https://api.github.com/repos/$repo/releases" \
             | jq -r '.[].tag_name'
         }
 
@@ -124,11 +126,11 @@ runs:
         
           if [ -z "$version" ]; then
             echo "Fetching latest release for $repo"
-            wget -O "$TMPDIR/release.json" \
+            $WGET -O "$TMPDIR/release.json" \
               "https://api.github.com/repos/$repo/releases/latest"
           else
             echo "Selecting release >= $version"
-            wget -O "$TMPDIR/releases.json" \
+            $WGET -O "$TMPDIR/releases.json" \
               "https://api.github.com/repos/$repo/releases"
         
             release=$(jq -c --arg v "$version" '
@@ -160,7 +162,7 @@ runs:
           fi
         
           echo "Downloading package-info.json"
-          wget -O "$TMPDIR/package-info.json" "$asset_url"
+          $WGET -O "$TMPDIR/package-info.json" "$asset_url"
         
           echo "Resolving archive from package-info.json"
           resolve_package_info "$TMPDIR/package-info.json"
@@ -174,17 +176,19 @@ runs:
         
             echo "Downloading package list from $url"
         
-            wget -O "$TMPDIR/package-infos.json.gz" "$url" || {
+            $WGET -O "$TMPDIR/package-infos.json.gz" "$url" || {
               echo "Failed to download package-infos.json.gz"
               exit 1
             }
         
             echo "Extracting package-infos.json"
         
-            gunzip -v -c "$TMPDIR/package-infos.json.gz" > "$PKG_DISTRO" || {
+            gunzip -v -c "$TMPDIR/package-infos.json.gz" || {
               echo "gunzip failed"
               exit 1
             }
+
+            mv "$TMPDIR/package-infos.json" "$PKG_DISTRO"
         
             if [ ! -s "$PKG_DISTRO" ]; then
               echo "package-infos.json extraction failed"
