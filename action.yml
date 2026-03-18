@@ -181,7 +181,7 @@ runs:
         
             echo "Extracting package-infos.json"
         
-            gunzip -c "$TMPDIR/package-infos.json.gz" > "$PKG_DISTRO" || {
+            gunzip -v -c "$TMPDIR/package-infos.json.gz" > "$PKG_DISTRO" || {
               echo "gunzip failed"
               exit 1
             }
