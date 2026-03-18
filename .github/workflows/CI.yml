@@ -34,5 +34,7 @@ jobs:
         with:
           packages: |
             gap-packages/AutoDoc
-            utils
+            POLYCYCLIC
+            groupoids@1.79
+            gap-packages/utils@0.92
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
