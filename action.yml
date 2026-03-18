@@ -177,8 +177,8 @@ runs:
 
         ############################################
         install_from_name() {
-        
-          name="$1"
+
+          name=$(echo "$1" | tr '[:upper:]' '[:lower:]')
           version="${2:-}"
         
           load_package_distro
