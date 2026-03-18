@@ -37,6 +37,9 @@ runs:
             *.zip)     unzip -q "$archive" -d "$DEST" ;;
             *) echo "Unsupported archive: $url"; exit 1 ;;
           esac
+
+          echo "Checking $DEST" for files?
+          ls -a $DEST
         }
 
         ############################################
