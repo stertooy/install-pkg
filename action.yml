@@ -1,248 +1,187 @@
 name: 'Install packages'
 description: 'Install additional GAP packages'
+
 inputs:
   packages:
     description: 'Space-separated list of packages to install'
     required: true
     default: ''
-  ignore-errors:
-    description: 'Ignore errors when installing'
-    required: false
-    default: 'false'
-  use-latex:
-    description: "Install and use latex (only works on Linux)"
-    required: false
-    default: "false"
 
 runs:
   using: "composite"
   steps:
-    - name: "Install TeX Live"
-      if: ${{ inputs.use-latex == 'true' }}
+    - name: Install GAP packages
       shell: bash
       run: |
-        sudo apt-get install --no-install-recommends texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
-    - name: "Run tests"
-      shell: bash
-      run: |
+        set -euo pipefail
+
         # Convert newlines to spaces
         PACKAGES=$(echo "${{ inputs.packages }}" | tr '\n' ' ')
-        
+
         DEST="$HOME/.gap/pkg"
-        PKG_DISTRO_URL="https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
-        
         mkdir -p "$DEST"
-        
-        TMPDIR="$(mktemp -d)"
-        trap 'rm -rf "$TMPDIR"' EXIT
-        
+
+        TMPDIR=$(mktemp -d)
+        PKG_DISTRO="$TMPDIR/package-infos.json"
+
         ############################################
-        # Utility functions
-        ############################################
-        
         download_and_extract() {
-            local url="$1"
-            local file="$TMPDIR/archive"
-        
-            echo "Downloading archive: $url"
-        
-            curl -L "$url" -o "$file"
-        
-            case "$url" in
-                *.tar.gz)
-                    tar -xzf "$file" -C "$DEST"
-                    ;;
-                *.tar.bz2)
-                    tar -xjf "$file" -C "$DEST"
-                    ;;
-                *.zip)
-                    unzip -q "$file" -d "$DEST"
-                    ;;
-                *)
-                    echo "Unsupported archive format: $url"
-                    exit 1
-                    ;;
-            esac
+          url="$1"
+          archive="$TMPDIR/archive"
+
+          echo "Downloading $url"
+
+          wget -qO "$archive" "$url"
+
+          case "$url" in
+            *.tar.gz)  tar -xzf "$archive" -C "$DEST" ;;
+            *.tar.bz2) tar -xjf "$archive" -C "$DEST" ;;
+            *.zip)     unzip -q "$archive" -d "$DEST" ;;
+            *) echo "Unsupported archive: $url"; exit 1 ;;
+          esac
         }
-        
-        prefer_archive_format() {
-            local base="$1"
-            local formats="$2"
-        
-            if echo "$formats" | grep -q "tar.gz"; then
-                echo "${base}.tar.gz"
-            elif echo "$formats" | grep -q "tar.bz2"; then
-                echo "${base}.tar.bz2"
-            elif echo "$formats" | grep -q "zip"; then
-                echo "${base}.zip"
-            else
-                echo "No supported archive format found"
-                exit 1
-            fi
-        }
-        
+
         ############################################
-        # GitHub helpers
+        prefer_archive() {
+          base="$1"
+          formats="$2"
+
+          if echo "$formats" | grep -q tar.gz; then
+            echo "${base}.tar.gz"
+          elif echo "$formats" | grep -q tar.bz2; then
+            echo "${base}.tar.bz2"
+          else
+            echo "${base}.zip"
+          fi
+        }
+
         ############################################
-        
-        github_latest_release() {
-            local repo="$1"
-            curl -s "https://api.github.com/repos/$repo/releases/latest"
+        resolve_package_info() {
+          url="$1"
+          info="$TMPDIR/package-info.json"
+
+          wget -qO "$info" "$url"
+
+          archive_base=$(jq -r '.ArchiveURL // empty' "$info")
+          formats=$(jq -r '.ArchiveFormats[]? // empty' "$info")
+
+          archive=$(prefer_archive "$archive_base" "$formats")
+
+          download_and_extract "$archive"
         }
-        
-        github_all_releases() {
-            local repo="$1"
-            curl -s "https://api.github.com/repos/$repo/releases"
+
+        ############################################
+        github_latest_tag() {
+          repo="$1"
+          wget -qO- "https://api.github.com/repos/$repo/releases/latest" \
+            | jq -r '.tag_name'
         }
-        
+
+        ############################################
+        github_release_tags() {
+          repo="$1"
+          wget -qO- "https://api.github.com/repos/$repo/releases" \
+            | jq -r '.[].tag_name'
+        }
+
+        ############################################
         find_release_for_version() {
-            local repo="$1"
-            local version="$2"
-        
-            github_all_releases "$repo" \
-              | jq -r '.[].tag_name' \
-              | sed 's/^v//' \
-              | sort -V \
-              | awk -v v="$version" '$0>=v {print; exit}'
+          repo="$1"
+          version="$2"
+
+          github_release_tags "$repo" \
+            | sed 's/^v//' \
+            | sort -V \
+            | awk -v v="$version" '$0>=v {print; exit}'
         }
-        
+
         ############################################
-        # package-info.json resolver
-        ############################################
-        
-        resolve_archive_from_package_info() {
-            local url="$1"
-        
-            local info="$TMPDIR/package-info.json"
-        
-            curl -L "$url" -o "$info"
-        
-            local archive_url
-            archive_url=$(jq -r '.ArchiveURL' "$info")
-        
-            local formats
-            formats=$(jq -r '.ArchiveFormats[]' "$info")
-        
-            local archive
-            archive=$(prefer_archive_format "$archive_url" "$formats")
-        
-            download_and_extract "$archive"
-        }
-        
-        ############################################
-        # repository resolver
-        ############################################
-        
         install_from_repo() {
-        
-            local repo="$1"
-            local version="${2:-}"
-        
-            if [[ -z "$version" ]]; then
-                release=$(github_latest_release "$repo")
-                tag=$(echo "$release" | jq -r '.tag_name')
-            else
-                tag=$(find_release_for_version "$repo" "$version")
-            fi
-        
-            echo "Using release: $tag"
-        
-            info_url="https://raw.githubusercontent.com/$repo/$tag/package-info.json"
-        
-            resolve_archive_from_package_info "$info_url"
+          repo="$1"
+          version="${2:-}"
+
+          if [ -z "$version" ]; then
+            tag=$(github_latest_tag "$repo")
+          else
+            tag=$(find_release_for_version "$repo" "$version")
+          fi
+
+          echo "Using release $tag"
+
+          info_url="https://raw.githubusercontent.com/$repo/$tag/package-info.json"
+
+          resolve_package_info "$info_url"
         }
-        
+
         ############################################
-        # PackageDistro lookup
-        ############################################
-        
         load_package_distro() {
-        
-            if [[ ! -f "$TMPDIR/package-infos.json" ]]; then
-                curl -L "$PKG_DISTRO_URL" -o "$TMPDIR/package-infos.json.gz"
-                gunzip "$TMPDIR/package-infos.json.gz"
-            fi
+          if [ ! -f "$PKG_DISTRO" ]; then
+            wget -qO "$TMPDIR/pkgs.json.gz" \
+              https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz
+            gunzip "$TMPDIR/pkgs.json.gz"
+            mv "$TMPDIR/pkgs.json" "$PKG_DISTRO"
+          fi
         }
-        
-        find_package_in_distro() {
-        
-            local name="$1"
-        
-            load_package_distro
-        
-            jq -r --arg n "$name" '
-              .[] | select(.PackageName==$n)
-            ' "$TMPDIR/package-infos.json"
+
+        ############################################
+        install_from_name() {
+          name="$1"
+          version="${2:-}"
+
+          load_package_distro
+
+          pkg=$(jq -c --arg n "$name" \
+            '.Packages[] | select(.PackageName==$n)' \
+            "$PKG_DISTRO")
+
+          if [ -z "$pkg" ]; then
+            echo "Package $name not found"
+            exit 1
+          fi
+
+          distro_version=$(echo "$pkg" | jq -r '.Version')
+
+          if [ -z "$version" ] || [ "$version" = "$distro_version" ]; then
+
+            archive_base=$(echo "$pkg" | jq -r '.ArchiveURL')
+            formats=$(echo "$pkg" | jq -r '.ArchiveFormats[]?')
+
+            archive=$(prefer_archive "$archive_base" "$formats")
+
+            download_and_extract "$archive"
+
+          else
+
+            repo=$(echo "$pkg" | jq -r '.SourceRepository')
+            repo=${repo#https://github.com/}
+
+            install_from_repo "$repo" "$version"
+
+          fi
         }
-        
-        install_from_package_name() {
-        
-            local name="$1"
-            local version="${2:-}"
-        
-            pkg=$(find_package_in_distro "$name")
-        
-            if [[ -z "$pkg" ]]; then
-                echo "Package not found: $name"
-                exit 1
-            fi
-        
-            distro_version=$(echo "$pkg" | jq -r '.Version')
-        
-            if [[ -z "$version" || "$version" == "$distro_version" ]]; then
-        
-                archive_url=$(echo "$pkg" | jq -r '.ArchiveURL')
-                formats=$(echo "$pkg" | jq -r '.ArchiveFormats[]')
-        
-                archive=$(prefer_archive_format "$archive_url" "$formats")
-        
-                download_and_extract "$archive"
-        
-            else
-        
-                repo=$(echo "$pkg" | jq -r '.SourceRepository')
-        
-                repo=${repo#https://github.com/}
-        
-                install_from_repo "$repo" "$version"
-        
-            fi
-        }
-        
+
         ############################################
-        # Input parsing
-        ############################################
-        
-        split_packages() {
-            printf "%s\n" "$PACKAGES" | tr ' ' '\n' | sed '/^$/d'
-        }
-        
-        ############################################
-        # Main loop
-        ############################################
-        
-        split_packages | while read -r pkg; do
-        
-            version=""
-        
-            if [[ "$pkg" == *@* ]]; then
-                version="${pkg##*@}"
-                pkg="${pkg%@*}"
-            fi
-        
-            if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
-        
-                download_and_extract "$pkg"
-        
-            elif [[ "$pkg" =~ .*/.* ]]; then
-        
-                install_from_repo "$pkg" "$version"
-        
-            else
-        
-                install_from_package_name "$pkg" "$version"
-        
-            fi
-        
+        for pkg in $PACKAGES; do
+
+          version=""
+
+          if [[ "$pkg" == *@* ]]; then
+            version="${pkg##*@}"
+            pkg="${pkg%@*}"
+          fi
+
+          if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
+
+            download_and_extract "$pkg"
+
+          elif [[ "$pkg" =~ .*/.* ]]; then
+
+            install_from_repo "$pkg" "$version"
+
+          else
+
+            install_from_name "$pkg" "$version"
+
+          fi
+
         done
-          
