@@ -203,7 +203,7 @@ runs:
             download_and_extract "$archive_url"
         
           else
-            repo=$(echo "$pkg" | jq -r '.SourceRepository')
+            repo=$(echo "$pkg" | jq -r '.SourceRepository.URL')
             repo=${repo#https://github.com/}
             
             echo "using repository $repo"
