@@ -22,7 +22,7 @@ runs:
         TMPDIR=$(mktemp -d)
         PKG_DISTRO="$TMPDIR/package-infos.json"
 
-        WGET="wget --header=\"Authorization: Bearer $GITHUB_TOKEN\""
+        WGET_HEADER='--header="Authorization: Bearer ${{ github.token }}"'
 
         ############################################
         download_and_extract() {
@@ -31,7 +31,7 @@ runs:
 
           echo "Downloading $url"
 
-          $WGET -O "$archive" "$url"
+          wget "$WGET_HEADER" -O "$archive" "$url"
 
           case "$url" in
             *.tar.gz)  tar -xzf "$archive" -C "$DEST" ;;
@@ -84,14 +84,14 @@ runs:
         ############################################
         github_latest_tag() {
           repo="$1"
-          $WGET -O- "https://api.github.com/repos/$repo/releases/latest" \
+          wget "$WGET_HEADER" -O- "https://api.github.com/repos/$repo/releases/latest" \
             | jq -r '.tag_name'
         }
 
         ############################################
         github_release_tags() {
           repo="$1"
-          $WGET -O- "https://api.github.com/repos/$repo/releases" \
+          wget "$WGET_HEADER" -O- "https://api.github.com/repos/$repo/releases" \
             | jq -r '.[].tag_name'
         }
 
@@ -126,11 +126,11 @@ runs:
         
           if [ -z "$version" ]; then
             echo "Fetching latest release for $repo"
-            $WGET -O "$TMPDIR/release.json" \
+            wget "$WGET_HEADER" -O "$TMPDIR/release.json" \
               "https://api.github.com/repos/$repo/releases/latest"
           else
             echo "Selecting release >= $version"
-            $WGET -O "$TMPDIR/releases.json" \
+            wget "$WGET_HEADER" -O "$TMPDIR/releases.json" \
               "https://api.github.com/repos/$repo/releases"
         
             release=$(jq -c --arg v "$version" '
@@ -162,7 +162,7 @@ runs:
           fi
         
           echo "Downloading package-info.json"
-          $WGET -O "$TMPDIR/package-info.json" "$asset_url"
+          wget "$WGET_HEADER" -O "$TMPDIR/package-info.json" "$asset_url"
         
           echo "Resolving archive from package-info.json"
           resolve_package_info "$TMPDIR/package-info.json"
@@ -176,7 +176,7 @@ runs:
         
             echo "Downloading package list from $url"
         
-            $WGET -O "$TMPDIR/package-infos.json.gz" "$url" || {
+            wget "$WGET_HEADER" -O "$TMPDIR/package-infos.json.gz" "$url" || {
               echo "Failed to download package-infos.json.gz"
               exit 1
             }
