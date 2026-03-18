@@ -110,17 +110,24 @@ runs:
           repo="$1"
           version="$2"
         
+          # If version is "latest", treat as empty
+          if [ "$version" = "latest" ]; then
+            version=""
+          fi
+        
+          # If version is "dev" or "devel", clone default branch
+          if [ "$version" = "dev" ] || [ "$version" = "devel" ]; then
+            echo "Cloning development branch of $repo"
+            git clone "https://github.com/$repo.git" "$DEST/$(basename $repo)"
+            return
+          fi
+        
           if [ -z "$version" ]; then
-        
             echo "Fetching latest release for $repo"
-        
             wget -qO "$TMPDIR/release.json" \
               "https://api.github.com/repos/$repo/releases/latest"
-        
           else
-        
             echo "Selecting release >= $version"
-        
             wget -qO "$TMPDIR/releases.json" \
               "https://api.github.com/repos/$repo/releases"
         
@@ -137,9 +144,7 @@ runs:
             fi
         
             echo "$release" > "$TMPDIR/release.json"
-        
           fi
-        
         
           echo "Locating package-info.json asset"
         
@@ -154,14 +159,10 @@ runs:
             exit 1
           fi
         
-        
           echo "Downloading package-info.json"
-        
           wget -qO "$TMPDIR/package-info.json" "$asset_url"
         
-        
           echo "Resolving archive from package-info.json"
-        
           resolve_package_info "$TMPDIR/package-info.json"
         }
 
@@ -177,9 +178,14 @@ runs:
 
         ############################################
         install_from_name() {
-
+        
           name=$(echo "$1" | tr '[:upper:]' '[:lower:]')
           version="${2:-}"
+        
+          # normalize version aliases
+          if [ "$version" = "latest" ]; then
+            version=""
+          fi
         
           load_package_distro
         
@@ -199,14 +205,14 @@ runs:
             formats=$(echo "$formats" | tr ' ' '\n')
         
             archive_url=$(prefer_archive "$archive_base" "$formats")
-        
             download_and_extract "$archive_url"
         
           else
+            # "dev"/"devel" or other version → install from repo
             repo=$(echo "$pkg" | jq -r '.SourceRepository.URL')
             repo=${repo#https://github.com/}
-            
-            echo "using repository $repo"
+        
+            echo "Using repository $repo"
             install_from_repo "$repo" "$version"
           fi
         }
