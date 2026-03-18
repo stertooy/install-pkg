@@ -177,38 +177,36 @@ runs:
 
         ############################################
         install_from_name() {
+        
           name="$1"
           version="${2:-}"
-
+        
           load_package_distro
-
-          pkg=$(jq -c --arg n "$name" \
-            '.Packages[] | select(.PackageName==$n)' \
-            "$PKG_DISTRO")
-
-          if [ -z "$pkg" ]; then
+        
+          pkg=$(jq -c --arg n "$name" '.[$n]' "$PKG_DISTRO")
+        
+          if [ "$pkg" = "null" ] || [ -z "$pkg" ]; then
             echo "Package $name not found"
             exit 1
           fi
-
-          distro_version=$(echo "$pkg" | jq -r '.Version')
-
+        
+          distro_version=$(echo "$pkg" | jq -r '.Version // empty')
+        
           if [ -z "$version" ] || [ "$version" = "$distro_version" ]; then
-
+        
             archive_base=$(echo "$pkg" | jq -r '.ArchiveURL')
-            formats=$(echo "$pkg" | jq -r '.ArchiveFormats[]?')
-
-            archive=$(prefer_archive "$archive_base" "$formats")
-
-            download_and_extract "$archive"
-
+            formats=$(echo "$pkg" | jq -r '.ArchiveFormats')
+            formats=$(echo "$formats" | tr ' ' '\n')
+        
+            archive_url=$(prefer_archive "$archive_base" "$formats")
+        
+            download_and_extract "$archive_url"
+        
           else
-
             repo=$(echo "$pkg" | jq -r '.SourceRepository')
             repo=${repo#https://github.com/}
-
+        
             install_from_repo "$repo" "$version"
-
           fi
         }
 
