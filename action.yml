@@ -160,24 +160,27 @@ runs:
 
         ############################################
         for pkg in $PACKAGES; do
-
+          echo "Now handling $pkg"
           version=""
 
           if [[ "$pkg" == *@* ]]; then
+            echo "Found a version"
             version="${pkg##*@}"
             pkg="${pkg%@*}"
           fi
 
           if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
-
+            echo "Detected archive"
             download_and_extract "$pkg"
 
           elif [[ "$pkg" =~ .*/.* ]]; then
 
+            echo "Detected repository"
             install_from_repo "$pkg" "$version"
 
           else
 
+            echo "Detected package name"
             install_from_name "$pkg" "$version"
 
           fi
