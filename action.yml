@@ -55,17 +55,22 @@ runs:
 
         ############################################
         resolve_package_info() {
-          url="$1"
-          info="$TMPDIR/package-info.json"
-
-          wget -qO "$info" "$url"
-
-          archive_base=$(jq -r '.ArchiveURL // empty' "$info")
-          formats=$(jq -r '.ArchiveFormats[]? // empty' "$info")
-
-          archive=$(prefer_archive "$archive_base" "$formats")
-
-          download_and_extract "$archive"
+        
+          info="$1"
+        
+          if [ ! -f "$info" ]; then
+            echo "package-info.json not found: $info"
+            exit 1
+          fi
+        
+          archive_base=$(jq -r '.ArchiveURL' "$info")
+          formats=$(jq -r '.ArchiveFormats[]' "$info")
+        
+          archive_url=$(prefer_archive "$archive_base" "$formats")
+        
+          echo "Downloading package archive: $archive_url"
+        
+          download_and_extract "$archive_url"
         }
 
         ############################################
