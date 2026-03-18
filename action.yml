@@ -205,7 +205,8 @@ runs:
           else
             repo=$(echo "$pkg" | jq -r '.SourceRepository')
             repo=${repo#https://github.com/}
-        
+            
+            echo "using repository $repo"
             install_from_repo "$repo" "$version"
           fi
         }
