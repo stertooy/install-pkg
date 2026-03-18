@@ -19,9 +19,11 @@ runs:
         DEST="$HOME/.gap/pkg"
         mkdir -p "$DEST"
 
-        TMPDIR=$(mktemp -d)
+        TMPDIR="$RUNNER_TEMP/install-pkg"
+        mkdir -p "$TMPDIR"
+        
         PKG_DISTRO="$TMPDIR/package-infos.json"
-
+        
         WGET_HEADER='--header="Authorization: Bearer ${{ github.token }}"'
         echo "Headers: $WGET_HEADER"
 
