@@ -29,7 +29,7 @@ runs:
 
           echo "Downloading $url"
 
-          wget -qO "$archive" "$url"
+          wget -O "$archive" "$url"
 
           case "$url" in
             *.tar.gz)  tar -xzf "$archive" -C "$DEST" ;;
@@ -82,14 +82,14 @@ runs:
         ############################################
         github_latest_tag() {
           repo="$1"
-          wget -qO- "https://api.github.com/repos/$repo/releases/latest" \
+          wget -O- "https://api.github.com/repos/$repo/releases/latest" \
             | jq -r '.tag_name'
         }
 
         ############################################
         github_release_tags() {
           repo="$1"
-          wget -qO- "https://api.github.com/repos/$repo/releases" \
+          wget -O- "https://api.github.com/repos/$repo/releases" \
             | jq -r '.[].tag_name'
         }
 
@@ -124,11 +124,11 @@ runs:
         
           if [ -z "$version" ]; then
             echo "Fetching latest release for $repo"
-            wget -qO "$TMPDIR/release.json" \
+            wget -O "$TMPDIR/release.json" \
               "https://api.github.com/repos/$repo/releases/latest"
           else
             echo "Selecting release >= $version"
-            wget -qO "$TMPDIR/releases.json" \
+            wget -O "$TMPDIR/releases.json" \
               "https://api.github.com/repos/$repo/releases"
         
             release=$(jq -c --arg v "$version" '
@@ -160,7 +160,7 @@ runs:
           fi
         
           echo "Downloading package-info.json"
-          wget -qO "$TMPDIR/package-info.json" "$asset_url"
+          wget -O "$TMPDIR/package-info.json" "$asset_url"
         
           echo "Resolving archive from package-info.json"
           resolve_package_info "$TMPDIR/package-info.json"
@@ -169,7 +169,7 @@ runs:
         ############################################
         load_package_distro() {
           if [ ! -f "$PKG_DISTRO" ]; then
-            wget -qO "$TMPDIR/pkgs.json.gz" \
+            wget -O "$TMPDIR/pkgs.json.gz" \
               https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz
             gunzip "$TMPDIR/pkgs.json.gz"
             mv "$TMPDIR/pkgs.json" "$PKG_DISTRO"
