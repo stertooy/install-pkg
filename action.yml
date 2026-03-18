@@ -13,8 +13,6 @@ runs:
     - name: Install GAP packages
       shell: bash
       run: |
-        set -euo pipefail
-
         # Convert newlines to spaces
         PACKAGES=$(echo "${{ inputs.packages }}" | tr '\n' ' ')
 
