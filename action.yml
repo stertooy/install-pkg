@@ -24,7 +24,7 @@ runs:
         
         PKG_DISTRO="$TMPDIR/package-infos.json"
         
-        WGET_HEADER='--header="Authorization: Bearer ${{ github.token }}"'
+        WGET_HEADER='--header="Authorization: token ${{ github.token }}"'
         echo "Headers: $WGET_HEADER"
 
         ############################################
