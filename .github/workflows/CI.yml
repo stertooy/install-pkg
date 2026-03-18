@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: "Test on ${{ matrix.gap-version }}, use-latex: ${{ matrix.use-latex }}, ignore-errors: ${{ matrix.ignore-errors }}"
+    name: "Test on ${{ matrix.gap-version }}"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
