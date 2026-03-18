@@ -32,7 +32,7 @@ runs:
 
           echo "Downloading $url"
 
-          wget "$WGET_HEADER" -O "$archive" "$url"
+          wget -O "$archive" "$url"
 
           case "$url" in
             *.tar.gz)  tar -xzf "$archive" -C "$DEST" ;;
@@ -127,11 +127,11 @@ runs:
         
           if [ -z "$version" ]; then
             echo "Fetching latest release for $repo"
-            wget "$WGET_HEADER" -O "$TMPDIR/release.json" \
+            wget -O "$TMPDIR/release.json" \
               "https://api.github.com/repos/$repo/releases/latest"
           else
             echo "Selecting release >= $version"
-            wget "$WGET_HEADER" -O "$TMPDIR/releases.json" \
+            wget -O "$TMPDIR/releases.json" \
               "https://api.github.com/repos/$repo/releases"
         
             release=$(jq -c --arg v "$version" '
@@ -163,7 +163,7 @@ runs:
           fi
         
           echo "Downloading package-info.json"
-          wget "$WGET_HEADER" -O "$TMPDIR/package-info.json" "$asset_url"
+          wget -O "$TMPDIR/package-info.json" "$asset_url"
         
           echo "Resolving archive from package-info.json"
           resolve_package_info "$TMPDIR/package-info.json"
@@ -177,7 +177,7 @@ runs:
         
             echo "Downloading package list from $url"
         
-            wget "$WGET_HEADER" -O "$TMPDIR/package-infos.json.gz" "$url" || {
+            wget -O "$TMPDIR/package-infos.json.gz" "$url" || {
               echo "Failed to download package-infos.json.gz"
               exit 1
             }
