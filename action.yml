@@ -19,7 +19,14 @@ runs:
         DEST="$HOME/.gap/pkg"
         mkdir -p "$DEST"
 
-        TMPDIR="$RUNNER_TEMP/install-pkg"
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          # Convert Windows path (D:\...) to Cygwin path (/cygdrive/d/...)
+          TMPROOT=$(cygpath -u "$RUNNER_TEMP")
+        else
+          TMPROOT="$RUNNER_TEMP"
+        fi
+        
+        TMPDIR="$TMPROOT/install-pkg"
         mkdir -p "$TMPDIR"
         
         PKG_DISTRO="$TMPDIR/package-infos.json"
@@ -190,8 +197,6 @@ runs:
               echo "gunzip failed"
               exit 1
             }
-
-            mv "$TMPDIR/package-infos.json" "$PKG_DISTRO"
         
             if [ ! -s "$PKG_DISTRO" ]; then
               echo "package-infos.json extraction failed"
