@@ -169,10 +169,27 @@ runs:
         ############################################
         load_package_distro() {
           if [ ! -f "$PKG_DISTRO" ]; then
-            wget -O "$TMPDIR/pkgs.json.gz" \
-              https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz
-            gunzip "$TMPDIR/pkgs.json.gz"
-            mv "$TMPDIR/pkgs.json" "$PKG_DISTRO"
+        
+            url="https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
+        
+            echo "Downloading package list from $url"
+        
+            wget -O "$TMPDIR/package-infos.json.gz" "$url" || {
+              echo "Failed to download package-infos.json.gz"
+              exit 1
+            }
+        
+            echo "Extracting package-infos.json"
+        
+            gunzip -c "$TMPDIR/package-infos.json.gz" > "$PKG_DISTRO" || {
+              echo "gunzip failed"
+              exit 1
+            }
+        
+            if [ ! -s "$PKG_DISTRO" ]; then
+              echo "package-infos.json extraction failed"
+              exit 1
+            fi
           fi
         }
 
