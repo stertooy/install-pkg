@@ -42,14 +42,17 @@ runs:
         ############################################
         prefer_archive() {
           base="$1"
-          formats="$2"
-
-          if echo "$formats" | grep -q tar.gz; then
+          formats="$2"   # formats: multiple lines
+        
+          if echo "$formats" | grep -q "^\.tar\.gz$"; then
             echo "${base}.tar.gz"
-          elif echo "$formats" | grep -q tar.bz2; then
+          elif echo "$formats" | grep -q "^\.tar\.bz2$"; then
             echo "${base}.tar.bz2"
-          else
+          elif echo "$formats" | grep -q "^\.zip$"; then
             echo "${base}.zip"
+          else
+            echo "No supported archive format found in: $formats"
+            exit 1
           fi
         }
 
@@ -64,8 +67,8 @@ runs:
           fi
         
           archive_base=$(jq -r '.ArchiveURL' "$info")
-          formats=$(jq -r '.ArchiveFormats[]' "$info")
-        
+          formats=$(jq -r '.ArchiveFormats' "$info")
+          formats=$(echo "$formats" | tr ' ' '\n')
           archive_url=$(prefer_archive "$archive_base" "$formats")
         
           echo "Downloading package archive: $archive_url"
