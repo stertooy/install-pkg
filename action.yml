@@ -180,7 +180,7 @@ runs:
             formats=$(echo "$formats" | tr ' ' '\n')
         
             archive_url=$(prefer_archive "$archive_base" "$formats")
-            install_from_arch "$archive_url"
+            install_from_arch "$archive_url" "$target"
         
           else
             # Either "dev" or old version - install from repo
