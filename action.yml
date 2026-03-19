@@ -48,25 +48,9 @@ runs:
           echo "Downloading $url"
         
           wget -O "$archive" "$url"
-        
-          case "$url" in
-            *.tar.gz)  tar -xzf "$archive" -C "$extract" ;;
-            *.tar.bz2) tar -xjf "$archive" -C "$extract" ;;
-            *.zip)     unzip -q "$archive" -d "$extract" ;;
-            *) echo "Unsupported archive: $url"; exit 1 ;;
-          esac
-        
-          # detect whether archive has a single top-level directory
-          entries=("$extract"/*)
-        
-          if [ ${#entries[@]} -eq 1 ] && [ -d "${entries[0]}" ]; then
-            echo "Archive has single top-level directory"
-            mv "${entries[0]}" "$target"
-          else
-            echo "Archive has multiple top-level entries"
-            mkdir -p "$target"
-            mv "$extract"/* "$target"/
-          fi
+
+          tar -xf "$archive" -C "$target"
+          ls -a $target
 
           echo "Checking $DEST" for files?
           ls -a $DEST
