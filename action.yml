@@ -91,6 +91,7 @@ runs:
         resolve_package_info() {
         
           info="$1"
+          target="$2"
         
           if [ ! -f "$info" ]; then
             echo "package-info.json not found: $info"
@@ -103,7 +104,7 @@ runs:
           archive_url=$(prefer_archive "$archive_base" "$formats")
           echo "Downloading package archive: $archive_url"
         
-          download_and_extract "$archive_url"
+          download_and_extract "$archive_url" "$target"
         }
 
         ############################################
@@ -191,7 +192,7 @@ runs:
           wget -O "$TMPDIR/package-info.json" "$asset_url"
         
           echo "Resolving archive from package-info.json"
-          resolve_package_info "$TMPDIR/package-info.json"
+          resolve_package_info "$TMPDIR/package-info.json" "$target"
         }
 
         ############################################
