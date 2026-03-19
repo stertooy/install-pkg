@@ -22,14 +22,14 @@ runs:
         PACKAGES=$(echo "${{ inputs.packages }}" | tr '\n' ' ')
      
         if [ "$RUNNER_OS" = "Windows" ]; then
-          DEST="$HOME/_gap/pkg"
+          DEST="$GAPROOT/pkg"
           TMPDIR=$(cygpath -u "$RUNNER_TEMP/install-pkg")
         else
-          DEST="$HOME/.gap/pkg"
+          DEST="$GAPROOT/pkg"
           TMPDIR="$RUNNER_TEMP/install-pkg"
         fi
         
-        mkdir -p "$DEST"
+        #mkdir -p "$DEST"
         mkdir -p "$TMPDIR"
         
         PKG_DISTRO="$TMPDIR/package-infos.json"
@@ -41,6 +41,8 @@ runs:
           local url="$1"
           local filename=$(basename "$url")
           local target="$2"
+
+          clear_dest "$target"
           
           echo "Installing $filename at $target."
           
@@ -186,6 +188,13 @@ runs:
           echo "TODO - build package here"
         }
 
+        # Remove old folders
+        clear_dest() {
+          local dest="$1"
+          rm -rf "$dest"
+          rm -rf "$dest-*"
+        }
+
         ##### END HELPER FUNCTIONS #####
         for pkg in $PACKAGES; do
           echo "::group::Installing $pkg"
@@ -201,6 +210,7 @@ runs:
 
           if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
             echo "Input is an archive"
+            
             download_and_extract "$pkg" "$pkgdir"
           else
             # Check if package is already available
@@ -223,6 +233,7 @@ runs:
 
             if [ "$version" = "devel" ]; then
               echo "Cloning development branch of $repo"
+              clear_dest "$pkgdir"
               git clone "https://github.com/$repo.git" "$pkgdir"
             else
               get_archive_url "$repo" "$version"
