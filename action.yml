@@ -230,7 +230,7 @@ runs:
 
             if [ "$version" = "devel" ]; then
               echo "Cloning development branch of $repo"
-              git clone "https://github.com/$repo.git" "$target"
+              git clone "https://github.com/$repo.git" "$pkgdir"
             else
               get_archive_url "$repo" "$version"
               
