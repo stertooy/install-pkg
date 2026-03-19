@@ -285,32 +285,22 @@ runs:
             version="${pkg##*@}"
             pkg="${pkg%@*}"
           fi
-        
-          pkgdir=""
-        
+          
+          base=$(basename "$pkg")
+          name=$(strip_archive_suffix "$base")
+          name=$(echo "$name" | tr '[:upper:]' '[:lower:]')
+          pkgdir="$DEST/$name"
+
+          echo "Getting package $name with version $version into dir $pkgdir"
+         
           if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
             echo "Detected archive"
-        
-            base=$(basename "$pkg")
-            name=$(strip_archive_suffix "$base")
-            pkgdir="$DEST/$name"
-        
             download_and_extract "$pkg" "$pkgdir"
-        
           elif [[ "$pkg" =~ .*/.* ]]; then
             echo "Detected repository"
-        
-            name=$(basename "$pkg")
-            pkgdir="$DEST/$name"
-        
             install_from_repo "$pkg" "$version" "$pkgdir"
-        
           else
             echo "Detected package name"
-        
-            name=$(echo "$pkg" | tr '[:upper:]' '[:lower:]')
-            pkgdir="$DEST/$name"
-        
             install_from_name "$pkg" "$version" "$pkgdir"
           fi
         
