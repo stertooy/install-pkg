@@ -240,7 +240,7 @@ runs:
               repo=$(get_repo_from_name $name)
             fi
             
-            install_from_repo "$pkg" "$version" "$pkgdir"
+            install_from_repo "$repo" "$version" "$pkgdir"
           fi
         
           echo "Building package in $pkgdir"
