@@ -148,9 +148,9 @@ runs:
         load_package_distro() {
           if [ ! -f "$PKG_DISTRO" ]; then
             echo "Downloading packages-infos.json from PackageDistro"
-            target="$TMPDIR/package-infos.json.gz"
-            wget -qO "$target" "https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
-            gunzip -v "$target"
+            distro="$TMPDIR/package-infos.json.gz"
+            wget -qO "$distro" "https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
+            gunzip -v "$distro"
             if [ ! -s "$PKG_DISTRO" ]; then
               echo "::error::package-infos.json could not be obtained"
               exit 1
