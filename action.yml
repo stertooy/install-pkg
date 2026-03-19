@@ -104,11 +104,11 @@ runs:
         
           if [ "$version" = "latest" ]; then
             echo "Fetching latest release for $repo"
-            wget --header="$WGET_HEADER" -O "$TMPDIR/release.json" \
+            wget --header="$WGET_HEADER" -qO "$TMPDIR/release.json" \
               "https://api.github.com/repos/$repo/releases/latest"
           else
             echo "Selecting oldest release >= $version"
-            wget --header="$WGET_HEADER" -O "$TMPDIR/releases.json" \
+            wget --header="$WGET_HEADER" -qO "$TMPDIR/releases.json" \
               "https://api.github.com/repos/$repo/releases"
         
             release=$(jq -c --arg v "$version" '
@@ -203,7 +203,7 @@ runs:
 
         ############################################
         for pkg in $PACKAGES; do
-          echo "Now handling $pkg"
+          echo "::group::Now handling $pkg"
         
           version="latest"
         
