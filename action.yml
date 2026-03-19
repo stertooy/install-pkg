@@ -36,23 +36,17 @@ runs:
         WGET_HEADER="Authorization: token ${{ github.token }}"
 
         ############################################
-        install_from_archive() {
+        install_from_arch() {
           url="$1"
           target="$2"
+          
+          echo "Installing package from $url at $target using arch."
 
           filename=$(basename "$url")
           archive="$TMPDIR/$filename"
-
-          echo "Downloading $url"
-        
           wget -qO "$archive" "$url"
-          
           mkdir -p "$target"
           bsdtar -xf "$archive" -C "$target"
-          ls -a $target
-
-          echo "Checking $DEST" for files?
-          ls -a $DEST
         }
 
         ############################################
@@ -68,19 +62,20 @@ runs:
           elif echo "$formats" | grep -q "^\.zip$"; then
             echo "${base}.zip"
           else
-            echo "No supported archive format found"
+            echo "::error::No supported archive format found"
             exit 1
           fi
         }
 
         ############################################
-        install_from_packageinfo() {
-        
+        install_from_json() {
           info="$1"
           target="$2"
+          
+          echo "Installing package from $info at $target using json."
         
           if [ ! -f "$info" ]; then
-            echo "package-info.json not found: $info"
+            echo "::error::Could not find package-info.json: $info"
             exit 1
           fi
         
@@ -88,47 +83,16 @@ runs:
           formats=$(jq -r '.ArchiveFormats' "$info")
           formats=$(echo "$formats" | tr ' ' '\n')
           archive_url=$(prefer_archive "$archive_base" "$formats")
-          echo "Downloading package archive: $archive_url"
-        
-          install_from_archive "$archive_url" "$target"
-        }
-
-        ############################################
-        github_latest_tag() {
-          repo="$1"
-          wget --header="$WGET_HEADER" -O- "https://api.github.com/repos/$repo/releases/latest" \
-            | jq -r '.tag_name'
-        }
-
-        ############################################
-        github_release_tags() {
-          repo="$1"
-          wget --header="$WGET_HEADER" -O- "https://api.github.com/repos/$repo/releases" \
-            | jq -r '.[].tag_name'
-        }
-
-        ############################################
-        find_release_for_version() {
-          repo="$1"
-          version="$2"
-
-          github_release_tags "$repo" \
-            | sed 's/^v//' \
-            | sort -V \
-            | awk -v v="$version" '$0>=v {print; exit}'
+          install_from_arch "$archive_url" "$target"
         }
 
         ############################################
         install_from_repo() {
-        
           repo="$1"
           version="$2"
           target="$3"
-        
-          # If version is "latest", treat as empty
-          if [ "$version" = "latest" ]; then
-            version=""
-          fi
+
+          echo "Installing $repo (version: $version) at $target using repo."
         
           # If version is "dev" or "devel", clone default branch
           if [ "$version" = "dev" ] || [ "$version" = "devel" ]; then
@@ -137,7 +101,7 @@ runs:
             return
           fi
         
-          if [ -z "$version" ]; then
+          if [ "$version" = "latest" ]; then
             echo "Fetching latest release for $repo"
             wget --header="$WGET_HEADER" -O "$TMPDIR/release.json" \
               "https://api.github.com/repos/$repo/releases/latest"
@@ -154,15 +118,13 @@ runs:
             ' "$TMPDIR/releases.json")
         
             if [ "$release" = "null" ] || [ -z "$release" ]; then
-              echo "No release >= $version found"
+              echo "::error::No release >= $version found"
               exit 1
             fi
         
             echo "$release" > "$TMPDIR/release.json"
           fi
-        
-          echo "Locating package-info.json asset"
-        
+          
           asset_url=$(jq -r '
             .assets[]
             | select(.name=="package-info.json")
@@ -170,15 +132,12 @@ runs:
           ' "$TMPDIR/release.json")
         
           if [ -z "$asset_url" ] || [ "$asset_url" = "null" ]; then
-            echo "package-info.json asset not found"
+            echo "::error::Release has no package-info.json asset"
             exit 1
           fi
         
-          echo "Downloading package-info.json"
           wget -qO "$TMPDIR/package-info.json" "$asset_url"
-        
-          echo "Resolving archive from package-info.json"
-          install_from_packageinfo "$TMPDIR/package-info.json" "$target"
+          install_from_json "$TMPDIR/package-info.json" "$target"
         }
 
         ############################################
@@ -196,10 +155,11 @@ runs:
 
         ############################################
         install_from_name() {
-        
           name="$1"
           version="$2"
           target="$3"
+
+          echo "Installing $name (version: $version) at $target using name."
         
           load_package_distro
         
@@ -219,7 +179,7 @@ runs:
             formats=$(echo "$formats" | tr ' ' '\n')
         
             archive_url=$(prefer_archive "$archive_base" "$formats")
-            install_from_archive "$archive_url"
+            install_from_arch "$archive_url"
         
           else
             # "dev"/"devel" or other version → install from repo
@@ -270,7 +230,7 @@ runs:
          
           if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
             echo "Detected archive"
-            install_from_archive "$pkg" "$pkgdir"
+            install_from_arch "$pkg" "$pkgdir"
           elif [[ "$pkg" =~ .*/.* ]]; then
             echo "Detected repository"
             install_from_repo "$pkg" "$version" "$pkgdir"
