@@ -47,6 +47,7 @@ runs:
           wget -qO "$archive" "$url"
           mkdir -p "$target"
           bsdtar -xf "$archive" -C "$target"
+          rm "$archive"
         }
 
         ############################################
@@ -123,6 +124,7 @@ runs:
             fi
         
             echo "$release" > "$TMPDIR/release.json"
+            rm "$TMPDIR/releases.json"
           fi
           
           asset_url=$(jq -r '
@@ -130,6 +132,7 @@ runs:
             | select(.name=="package-info.json")
             | .browser_download_url
           ' "$TMPDIR/release.json")
+          rm "$TMPDIR/release.json"
         
           if [ -z "$asset_url" ] || [ "$asset_url" = "null" ]; then
             echo "::error::Release has no package-info.json asset"
@@ -138,14 +141,17 @@ runs:
         
           wget -qO "$TMPDIR/package-info.json" "$asset_url"
           install_from_json "$TMPDIR/package-info.json" "$target"
+          rm "$TMPDIR/package-info.json"
         }
 
         ############################################
         load_package_distro() {
           if [ ! -f "$PKG_DISTRO" ]; then
             echo "Downloading packages-infos.json from PackageDistro"
-            wget -qO "$TMPDIR/package-infos.json.gz" "https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
-            gunzip -v "$TMPDIR/package-infos.json.gz"
+            target="$TMPDIR/package-infos.json.gz"
+            wget -qO "$target" "https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
+            gunzip -v "$target"
+            rm "$target"
             if [ ! -s "$PKG_DISTRO" ]; then
               echo "::error::package-infos.json could not be obtained"
               exit 1
@@ -166,41 +172,22 @@ runs:
           pkg=$(jq -c --arg n "$name" '.[$n]' "$PKG_DISTRO")
         
           if [ "$pkg" = "null" ] || [ -z "$pkg" ]; then
-            echo "Package $name not found"
+            echo "::error::Package $name not found in PackageDistro"
             exit 1
           fi
         
-          distro_version=$(echo "$pkg" | jq -r '.Version // empty')
-        
-          if [ "$version" = "latest" ] || [ "$version" = "$distro_version" ]; then
-            # latest version - no need to access repo
-            echo "Latest version - immediately downloading"
-            archive_base=$(echo "$pkg" | jq -r '.ArchiveURL')
-            formats=$(echo "$pkg" | jq -r '.ArchiveFormats')
-            formats=$(echo "$formats" | tr ' ' '\n')
-        
-            archive_url=$(prefer_archive "$archive_base" "$formats")
-            install_from_arch "$archive_url" "$target"
-        
-          else
-            # Either "dev" or old version - install from repo
-            echo "Not latest version - obtaining from repo"
-            repo=$(echo "$pkg" | jq -r '.SourceRepository.URL')
-            repo=${repo#https://github.com/}
-        
-            echo "Using repository $repo"
-            install_from_repo "$repo" "$version" "$target"
-          fi
+          # Don't try to get URL from PackageDistro - may not be merged yet!
+          repo=$(echo "$pkg" | jq -r '.SourceRepository.URL')
+          repo=${repo#https://github.com/}
+
+          install_from_repo "$repo" "$version" "$target"
+
         }
 
         #####################
 
         build_pkg() {
           echo "TODO - build package here"
-        }
-
-        strip_archive_suffix() {
-          echo "$1" | sed -E 's/\.(tar\.gz|tar\.bz2|zip)$//'
         }
 
         check_pkg_availability() {
@@ -223,20 +210,20 @@ runs:
           fi
           
           base=$(basename "$pkg")
-          name=$(strip_archive_suffix "$base")
+          name=${base%.*}
           name=$(echo "$name" | tr '[:upper:]' '[:lower:]')
           pkgdir="$DEST/$name"
 
           echo "Getting package $name with version $version into dir $pkgdir"
          
           if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
-            echo "Detected archive"
+            echo "Input is an archive"
             install_from_arch "$pkg" "$pkgdir"
           elif [[ "$pkg" =~ .*/.* ]]; then
-            echo "Detected repository"
+            echo "Input is a package repository"
             install_from_repo "$pkg" "$version" "$pkgdir"
           else
-            echo "Detected package name"
+            echo "Input is a package name"
             install_from_name "$name" "$version" "$pkgdir"
           fi
         
