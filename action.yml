@@ -40,15 +40,12 @@ runs:
 
           filename=$(basename "$url")
           archive="$TMPDIR/$filename"
-        
-          extract="$TMPDIR/extract"
-          rm -rf "$extract"
-          mkdir -p "$extract"
-        
+
           echo "Downloading $url"
         
           wget -O "$archive" "$url"
-
+          
+          mkdir -p "$target"
           tar -xf "$archive" -C "$target"
           ls -a $target
 
