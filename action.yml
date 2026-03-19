@@ -247,6 +247,7 @@ runs:
           pkg="$1"
           ver="$2"
           gap <<GAPINPUT
+            Print(GAPInfo.UserGapRoot);
             QuitGap( TestPackageAvailability( "$pkg", "$ver" ) <> fail );
         GAPINPUT
         }
