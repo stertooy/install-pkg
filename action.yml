@@ -226,13 +226,9 @@ runs:
         ############################################
         install_from_name() {
         
-          name=$(echo "$1" | tr '[:upper:]' '[:lower:]')
-          version="${2:-}"
-        
-          # normalize version aliases
-          if [ "$version" = "latest" ]; then
-            version=""
-          fi
+          name="$1"
+          version="$2"
+          target="$3"
         
           load_package_distro
         
@@ -260,7 +256,7 @@ runs:
             repo=${repo#https://github.com/}
         
             echo "Using repository $repo"
-            install_from_repo "$repo" "$version"
+            install_from_repo "$repo" "$version" "$target"
           fi
         }
 
@@ -279,7 +275,7 @@ runs:
         for pkg in $PACKAGES; do
           echo "Now handling $pkg"
         
-          version=""
+          version="latest"
         
           if [[ "$pkg" == *@* ]]; then
             version="${pkg##*@}"
