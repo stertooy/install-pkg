@@ -10,49 +10,15 @@ on:
 
 jobs:
   test:
-    name: "Test on ${{ matrix.gap-version }}"
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        gap-version:
-          - 'devel'
-          - '4.15'
-          #- '4.13'
-          #- '4.12'
-          #- '4.11'
-          #- '4.10'
-          
-    steps:
-      - name: "Check out this repository"
-        uses: actions/checkout@v6
-        with:
-          path: this-action/
-      - uses: gap-actions/setup-gap@v3
-        with:
-          gap-version: ${{ matrix.gap-version }}
-      - uses: ./this-action/
-        with:
-          packages: |
-            SmallClassNr@dev
-            gap-packages/AutoDoc
-            POLYCYCLIC
-            groupoids@1.79
-            gap-packages/utils@0.92
-            https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
-            https://github.com/gap-packages/forms/releases/download/v1.2.14/forms-1.2.14.zip
-
-  test-platforms:
     name: "Test on ${{ matrix.os }}, GAP version ${{ matrix.gap-version }}"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         gap-version:
           - 'devel'
           - '4.15'
-            
     steps:
       - uses: stertooy/setup-cygwin@jq
         if: ${{ matrix.os == 'windows-latest' }}
@@ -73,3 +39,6 @@ jobs:
             gap-packages/utils@0.92
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
             https://github.com/gap-packages/forms/releases/download/v1.2.14/forms-1.2.14.zip
+      - shell: bash
+        run: |
+          gap -c 'QuitGap(0);'
