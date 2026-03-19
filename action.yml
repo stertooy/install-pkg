@@ -38,8 +38,6 @@ runs:
         WGET_HEADER="Authorization: token ${{ github.token }}"
         echo "Headers: $WGET_HEADER"
 
-        TAR="bsdtar"
-
         ############################################
         install_from_archive() {
           url="$1"
@@ -50,10 +48,10 @@ runs:
 
           echo "Downloading $url"
         
-          wget -O "$archive" "$url"
+          wget -qO "$archive" "$url"
           
           mkdir -p "$target"
-          $TAR -xf "$archive" -C "$target"
+          bsdtar -xf "$archive" -C "$target"
           ls -a $target
 
           echo "Checking $DEST" for files?
@@ -180,7 +178,7 @@ runs:
           fi
         
           echo "Downloading package-info.json"
-          wget -O "$TMPDIR/package-info.json" "$asset_url"
+          wget -qO "$TMPDIR/package-info.json" "$asset_url"
         
           echo "Resolving archive from package-info.json"
           install_from_packageinfo "$TMPDIR/package-info.json" "$target"
@@ -194,7 +192,7 @@ runs:
         
             echo "Downloading package list from $url"
         
-            wget -O "$TMPDIR/package-infos.json.gz" "$url" || {
+            wget -qO "$TMPDIR/package-infos.json.gz" "$url" || {
               echo "Failed to download package-infos.json.gz"
               exit 1
             }
