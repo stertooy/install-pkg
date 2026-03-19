@@ -194,9 +194,12 @@ runs:
         check_pkg_availability() {
           pkg="$1"
           ver="$2"
+          echo "BEFORE"
           gap <<GAPINPUT
             QuitGap( TestPackageAvailability( "$pkg", "$ver" ) <> fail );
         GAPINPUT
+          echo "AFTER"
+          return $?
         }
 
         ############################################
