@@ -1,48 +1,313 @@
 name: 'Install packages'
 description: 'Install additional GAP packages'
+
 inputs:
   packages:
     description: 'Space-separated list of packages to install'
     required: true
     default: ''
-  ignore-errors:
-    description: 'Ignore errors when installing'
-    required: false
-    default: 'false'
-  use-latex:
-    description: "Install and use latex (only works on Linux)"
-    required: false
-    default: "false"
 
 runs:
   using: "composite"
   steps:
-    - name: "Install TeX Live"
-      if: ${{ inputs.use-latex == 'true' }}
+
+    - name: Install bsdtar
+      if: ${{ runner.os == 'Linux' }}
       shell: bash
-      run: |
-        sudo apt-get install --no-install-recommends texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
-    - name: "Run tests"
+      run: sudo apt install -y libarchive-tools # bsdtar
+    - name: Install GAP packages
       shell: bash
       run: |
         # Convert newlines to spaces
-        PKGS=$(echo "${{ inputs.packages }}" | tr '\n' ' ')
+        PACKAGES=$(echo "${{ inputs.packages }}" | tr '\n' ' ')
 
-        error_found=false
-        # Use `gap` instead of `$GAP` to avoid quitonbreak
-        for pkg in $PKGS; do
-          if ! gap -A <<GAPInput
-            LoadPackage("PackageManager");
-            QUIT_GAP(InstallPackage("${pkg}"));
-        GAPInput
-          then
-            error_found=true
-            echo "::error::Installation of ${pkg} may have failed"
-          fi
-        done
+        DEST="$HOME/.gap/pkg"
+        mkdir -p "$DEST"
 
-        # Exit unless ignore-errors is set to true
-        if [[ "${{ inputs.ignore-errors }}" != "true" && "$error_found" = "true" ]]; then
-          exit 1
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          # Convert Windows path (D:\...) to Cygwin path (/cygdrive/d/...)
+          TMPROOT=$(cygpath -u "$RUNNER_TEMP")
+        else
+          TMPROOT="$RUNNER_TEMP"
         fi
+        TMPDIR="$TMPROOT/install-pkg"
+        mkdir -p "$TMPDIR"
+        
+        PKG_DISTRO="$TMPDIR/package-infos.json"
+        
+        WGET_HEADER="Authorization: token ${{ github.token }}"
+        echo "Headers: $WGET_HEADER"
+
+        TAR="bsdtar"
+
+        ############################################
+        install_from_archive() {
+          url="$1"
+          target="$2"
+
+          filename=$(basename "$url")
+          archive="$TMPDIR/$filename"
+
+          echo "Downloading $url"
+        
+          wget -O "$archive" "$url"
           
+          mkdir -p "$target"
+          $TAR -xf "$archive" -C "$target"
+          ls -a $target
+
+          echo "Checking $DEST" for files?
+          ls -a $DEST
+        }
+
+        ############################################
+        prefer_archive() {
+        
+          base="$1" # base URL without extension
+          formats="$2" # newline-separated list of available archive formats
+        
+          if echo "$formats" | grep -q "^\.tar\.gz$"; then
+            echo "${base}.tar.gz"
+          elif echo "$formats" | grep -q "^\.tar\.bz2$"; then
+            echo "${base}.tar.bz2"
+          elif echo "$formats" | grep -q "^\.zip$"; then
+            echo "${base}.zip"
+          else
+            echo "No supported archive format found"
+            exit 1
+          fi
+        }
+
+        ############################################
+        install_from_packageinfo() {
+        
+          info="$1"
+          target="$2"
+        
+          if [ ! -f "$info" ]; then
+            echo "package-info.json not found: $info"
+            exit 1
+          fi
+        
+          archive_base=$(jq -r '.ArchiveURL' "$info")
+          formats=$(jq -r '.ArchiveFormats' "$info")
+          formats=$(echo "$formats" | tr ' ' '\n')
+          archive_url=$(prefer_archive "$archive_base" "$formats")
+          echo "Downloading package archive: $archive_url"
+        
+          install_from_archive "$archive_url" "$target"
+        }
+
+        ############################################
+        github_latest_tag() {
+          repo="$1"
+          wget --header="$WGET_HEADER" -O- "https://api.github.com/repos/$repo/releases/latest" \
+            | jq -r '.tag_name'
+        }
+
+        ############################################
+        github_release_tags() {
+          repo="$1"
+          wget --header="$WGET_HEADER" -O- "https://api.github.com/repos/$repo/releases" \
+            | jq -r '.[].tag_name'
+        }
+
+        ############################################
+        find_release_for_version() {
+          repo="$1"
+          version="$2"
+
+          github_release_tags "$repo" \
+            | sed 's/^v//' \
+            | sort -V \
+            | awk -v v="$version" '$0>=v {print; exit}'
+        }
+
+        ############################################
+        install_from_repo() {
+        
+          repo="$1"
+          version="$2"
+          target="$3"
+        
+          # If version is "latest", treat as empty
+          if [ "$version" = "latest" ]; then
+            version=""
+          fi
+        
+          # If version is "dev" or "devel", clone default branch
+          if [ "$version" = "dev" ] || [ "$version" = "devel" ]; then
+            echo "Cloning development branch of $repo"
+            git clone "https://github.com/$repo.git" "$target"
+            return
+          fi
+        
+          if [ -z "$version" ]; then
+            echo "Fetching latest release for $repo"
+            wget --header="$WGET_HEADER" -O "$TMPDIR/release.json" \
+              "https://api.github.com/repos/$repo/releases/latest"
+          else
+            echo "Selecting release >= $version"
+            wget --header="$WGET_HEADER" -O "$TMPDIR/releases.json" \
+              "https://api.github.com/repos/$repo/releases"
+        
+            release=$(jq -c --arg v "$version" '
+              map(. + {ver:(.tag_name|sub("^v";""))})
+              | sort_by(.ver)
+              | map(select(.ver >= $v))
+              | .[0]
+            ' "$TMPDIR/releases.json")
+        
+            if [ "$release" = "null" ] || [ -z "$release" ]; then
+              echo "No release >= $version found"
+              exit 1
+            fi
+        
+            echo "$release" > "$TMPDIR/release.json"
+          fi
+        
+          echo "Locating package-info.json asset"
+        
+          asset_url=$(jq -r '
+            .assets[]
+            | select(.name=="package-info.json")
+            | .browser_download_url
+          ' "$TMPDIR/release.json")
+        
+          if [ -z "$asset_url" ] || [ "$asset_url" = "null" ]; then
+            echo "package-info.json asset not found"
+            exit 1
+          fi
+        
+          echo "Downloading package-info.json"
+          wget -O "$TMPDIR/package-info.json" "$asset_url"
+        
+          echo "Resolving archive from package-info.json"
+          install_from_packageinfo "$TMPDIR/package-info.json" "$target"
+        }
+
+        ############################################
+        load_package_distro() {
+          if [ ! -f "$PKG_DISTRO" ]; then
+        
+            url="https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
+        
+            echo "Downloading package list from $url"
+        
+            wget -O "$TMPDIR/package-infos.json.gz" "$url" || {
+              echo "Failed to download package-infos.json.gz"
+              exit 1
+            }
+        
+            echo "Extracting package-infos.json"
+        
+            gunzip -v "$TMPDIR/package-infos.json.gz" || {
+              echo "gunzip failed"
+              exit 1
+            }
+        
+            if [ ! -s "$PKG_DISTRO" ]; then
+              echo "package-infos.json extraction failed"
+              exit 1
+            fi
+          fi
+        }
+
+        ############################################
+        install_from_name() {
+        
+          name="$1"
+          version="$2"
+          target="$3"
+        
+          load_package_distro
+        
+          pkg=$(jq -c --arg n "$name" '.[$n]' "$PKG_DISTRO")
+        
+          if [ "$pkg" = "null" ] || [ -z "$pkg" ]; then
+            echo "Package $name not found"
+            exit 1
+          fi
+        
+          distro_version=$(echo "$pkg" | jq -r '.Version // empty')
+        
+          if [ -z "$version" ] || [ "$version" = "$distro_version" ]; then
+        
+            archive_base=$(echo "$pkg" | jq -r '.ArchiveURL')
+            formats=$(echo "$pkg" | jq -r '.ArchiveFormats')
+            formats=$(echo "$formats" | tr ' ' '\n')
+        
+            archive_url=$(prefer_archive "$archive_base" "$formats")
+            install_from_archive "$archive_url"
+        
+          else
+            # "dev"/"devel" or other version → install from repo
+            repo=$(echo "$pkg" | jq -r '.SourceRepository.URL')
+            repo=${repo#https://github.com/}
+        
+            echo "Using repository $repo"
+            install_from_repo "$repo" "$version" "$target"
+          fi
+        }
+
+        #####################
+
+        build_pkg() {
+          
+          echo "TODO - build package here"
+        }
+
+        strip_archive_suffix() {
+          echo "$1" | sed -E 's/\.(tar\.gz|tar\.bz2|zip)$//'
+        }
+
+        check_pkg_availability() {
+          pkg="$1"
+          ver="$2"
+          gap <<GAPINPUT
+            QuitGap( TestPackageAvailability( "$pkg", "$ver" ) <> fail );
+        GAPINPUT
+        }
+
+        ############################################
+        for pkg in $PACKAGES; do
+          echo "Now handling $pkg"
+        
+          version="latest"
+        
+          if [[ "$pkg" == *@* ]]; then
+            version="${pkg##*@}"
+            pkg="${pkg%@*}"
+          fi
+          
+          base=$(basename "$pkg")
+          name=$(strip_archive_suffix "$base")
+          name=$(echo "$name" | tr '[:upper:]' '[:lower:]')
+          pkgdir="$DEST/$name"
+
+          echo "Getting package $name with version $version into dir $pkgdir"
+         
+          if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
+            echo "Detected archive"
+            install_from_archive "$pkg" "$pkgdir"
+          elif [[ "$pkg" =~ .*/.* ]]; then
+            echo "Detected repository"
+            install_from_repo "$pkg" "$version" "$pkgdir"
+          else
+            echo "Detected package name"
+            install_from_name "$name" "$version" "$pkgdir"
+          fi
+        
+          echo "Building package in $pkgdir"
+        
+          (
+            cd "$pkgdir" || {
+              echo "Directory $pkgdir not found"
+              exit 1
+            }
+            echo "now inside $pkgdir"
+            ls -a .
+            build_pkg
+          )
+        
+        done
