@@ -35,27 +35,27 @@ runs:
         PKG_DISTRO="$TMPDIR/package-infos.json"
         WGET_HEADER="Authorization: token ${{ github.token }}"
 
-        ############################################
+        ##### BEGIN HELPER FUNCTIONS #####
+        # Download archive and extract to folder
         download_and_extract() {
-          url="$1"
-          target="$2"
+          local filename=$(basename "$1")
+          local target="$2"
           
-          echo "Installing package from $url at $target using arch."
-
-          filename=$(basename "$url")
-          archive="$TMPDIR/$filename"
+          echo "Installing $filename at $target."
+          
+          local archive="$TMPDIR/$filename"
           wget -qO "$archive" "$url"
           mkdir -p "$target"
           bsdtar -xf "$archive" -C "$target"
           rm "$archive"
         }
-
-        ############################################
+        
+        # Create valid archive url from base url and possible formats
         prefer_archive() {
-        
-          base="$1" # base URL without extension
-          formats="$2" # newline-separated list of available archive formats
-        
+          local base="$1"
+          local formats="$2" # newline-separated list
+
+          # Prefer .tar.gz if available
           if echo "$formats" | grep -q "^\.tar\.gz$"; then
             echo "${base}.tar.gz"
           elif echo "$formats" | grep -q "^\.tar\.bz2$"; then
@@ -68,7 +68,7 @@ runs:
           fi
         }
 
-        ############################################
+        # Get package name
         get_pkg_name() {
           local base=$(basename "$1")
       
@@ -80,7 +80,7 @@ runs:
           name=$(echo "$base" | tr '[:upper:]' '[:lower:]')
         }
 
-        ############################################
+        # Get archive URL
         get_archive_url() {
           local repo="$1"
           local version="$2"
@@ -134,10 +134,10 @@ runs:
           rm "$info"
         }
 
-        ############################################
+        # Get PackageDistro information
         get_package_distro() {
           if [ ! -f "$PKG_DISTRO" ]; then
-            # echo "Downloading packages-infos.json from PackageDistro"
+            echo "Downloading packages-infos.json from PackageDistro"
             local distro="$TMPDIR/package-infos.json.gz"
             wget -qO "$distro" "https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
             gunzip "$distro"
@@ -148,7 +148,7 @@ runs:
           fi
         }
 
-        ############################################
+        # Get repository name from package name using PackageDistro
         get_repo_from_name() {
           local name="$1"
         
@@ -161,7 +161,7 @@ runs:
             exit 1
           fi
         
-          # Don't try to get URL from PackageDistro - may not be merged yet!
+          # Don't try to get URL from PackageDistro - latest version not be merged yet!
           local repo_url=$(echo "$pkg" | jq -r '.SourceRepository.URL') || {
             echo "::error::Package $name not found in PackageDistro"
             exit 1
@@ -170,22 +170,22 @@ runs:
 
         }
 
-        #####################
-
-        build_pkg() {
-          echo "TODO - build package here"
-        }
-
+        # Use GAP to check if package-version combination is already installed
         check_pkg_availability() {
-          pkg="$1"
-          ver="$2"
+          local pkg="$1"
+          local ver="$2"
           gap -A -q <<GAPINPUT
             QuitGap( TestPackageAvailability( "$pkg", "$ver" ) <> fail );
         GAPINPUT
           return $?
         }
 
-        ############################################
+        # Build package
+        build_pkg() {
+          echo "TODO - build package here"
+        }
+
+        ##### END HELPER FUNCTIONS #####
         for pkg in $PACKAGES; do
           echo "::group::Installing $pkg"
           
