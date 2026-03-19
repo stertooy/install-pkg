@@ -10,6 +10,11 @@ inputs:
 runs:
   using: "composite"
   steps:
+
+    - name: Install bsdtar
+      if: ${{ runner.os == 'Linux' }}
+      shell: bash
+      run: sudo apt install -y libarchive-tools # bsdtar
     - name: Install GAP packages
       shell: bash
       run: |
