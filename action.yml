@@ -147,7 +147,7 @@ runs:
         ############################################
         load_package_distro() {
           if [ ! -f "$PKG_DISTRO" ]; then
-            echo "Downloading packages-infos.json from PackageDistro"
+            # echo "Downloading packages-infos.json from PackageDistro"
             distro="$TMPDIR/package-infos.json.gz"
             wget -qO "$distro" "https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
             gunzip -v "$distro"
