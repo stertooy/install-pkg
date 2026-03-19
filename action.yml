@@ -23,10 +23,10 @@ runs:
      
         if [ "$RUNNER_OS" = "Windows" ]; then
           DEST="$HOME/_gap/pkg"
-          TMPROOT=$(cygpath -u "$RUNNER_TEMP/install-pkg")
+          TMPDIR=$(cygpath -u "$RUNNER_TEMP/install-pkg")
         else
           DEST="$HOME/.gap/pkg"
-          TMPROOT="$RUNNER_TEMP/install-pkg"
+          TMPDIR="$RUNNER_TEMP/install-pkg"
         fi
         
         mkdir -p "$DEST"
