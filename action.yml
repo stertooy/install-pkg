@@ -36,18 +36,35 @@ runs:
         ############################################
         download_and_extract() {
           url="$1"
+          target="$2"
           archive="$TMPDIR/archive"
-
+          extract="$TMPDIR/extract"
+        
+          rm -rf "$extract"
+          mkdir -p "$extract"
+        
           echo "Downloading $url"
-
+        
           wget -O "$archive" "$url"
-
+        
           case "$url" in
-            *.tar.gz)  tar -xzf "$archive" -C "$DEST" ;;
-            *.tar.bz2) tar -xjf "$archive" -C "$DEST" ;;
-            *.zip)     unzip -q "$archive" -d "$DEST" ;;
+            *.tar.gz)  tar -xzf "$archive" -C "$extract" ;;
+            *.tar.bz2) tar -xjf "$archive" -C "$extract" ;;
+            *.zip)     unzip -q "$archive" -d "$extract" ;;
             *) echo "Unsupported archive: $url"; exit 1 ;;
           esac
+        
+          # detect whether archive has a single top-level directory
+          entries=("$extract"/*)
+        
+          if [ ${#entries[@]} -eq 1 ] && [ -d "${entries[0]}" ]; then
+            echo "Archive has single top-level directory"
+            mv "${entries[0]}" "$target"
+          else
+            echo "Archive has multiple top-level entries"
+            mkdir -p "$target"
+            mv "$extract"/* "$target"/
+          fi
 
           echo "Checking $DEST" for files?
           ls -a $DEST
@@ -84,10 +101,11 @@ runs:
           formats=$(jq -r '.ArchiveFormats' "$info")
           formats=$(echo "$formats" | tr ' ' '\n')
           archive_url=$(prefer_archive "$archive_base" "$formats")
-        
+          pkgdir=$(pkg_dir_from_info "$info")
           echo "Downloading package archive: $archive_url"
         
           download_and_extract "$archive_url"
+          echo "$pkgdir"
         }
 
         ############################################
@@ -120,6 +138,7 @@ runs:
         
           repo="$1"
           version="$2"
+          target="$3"
         
           # If version is "latest", treat as empty
           if [ "$version" = "latest" ]; then
@@ -129,7 +148,7 @@ runs:
           # If version is "dev" or "devel", clone default branch
           if [ "$version" = "dev" ] || [ "$version" = "devel" ]; then
             echo "Cloning development branch of $repo"
-            git clone "https://github.com/$repo.git" "$DEST/$(basename $repo)"
+            git clone "https://github.com/$repo.git" "$target"
             return
           fi
         
@@ -245,31 +264,66 @@ runs:
           fi
         }
 
+        #####################
+
+        build_pkg() {
+          
+          echo "TODO - build package here"
+        }
+
+        strip_archive_suffix() {
+          echo "$1" | sed -E 's/\.(tar\.gz|tar\.bz2|zip)$//'
+        }
+
         ############################################
         for pkg in $PACKAGES; do
           echo "Now handling $pkg"
+        
           version=""
-
+        
           if [[ "$pkg" == *@* ]]; then
-            echo "Found a version"
             version="${pkg##*@}"
             pkg="${pkg%@*}"
           fi
-
+        
+          pkgdir=""
+        
           if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
             echo "Detected archive"
-            download_and_extract "$pkg"
-
+        
+            base=$(basename "$pkg")
+            name=$(strip_archive_suffix "$base")
+            pkgdir="$DEST/$name"
+        
+            download_and_extract "$pkg" "$pkgdir"
+        
           elif [[ "$pkg" =~ .*/.* ]]; then
-
             echo "Detected repository"
-            install_from_repo "$pkg" "$version"
-
+        
+            name=$(basename "$pkg")
+            pkgdir="$DEST/$name"
+        
+            install_from_repo "$pkg" "$version" "$pkgdir"
+        
           else
-
             echo "Detected package name"
-            install_from_name "$pkg" "$version"
-
+        
+            name=$(echo "$pkg" | tr '[:upper:]' '[:lower:]')
+            pkgdir="$DEST/$name"
+        
+            install_from_name "$pkg" "$version" "$pkgdir"
           fi
-
+        
+          echo "Building package in $pkgdir"
+        
+          (
+            cd "$pkgdir" || {
+              echo "Directory $pkgdir not found"
+              exit 1
+            }
+            echo "now inside $pkgdir"
+            ls -a .
+            build_pkg
+          )
+        
         done
