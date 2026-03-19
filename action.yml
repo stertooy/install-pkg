@@ -224,23 +224,21 @@ runs:
             install_from_arch "$pkg" "$pkgdir"
           else
             # Check if package is already available
-            #if [ "$version" != "latest" ] && [ "$version" != "devel" ]; then
-              #if check_pkg_availability $name $version; then
-              #  echo "Package $name $version is already available, skipping."
-              #  continue
-              #else
-              #  echo "Package $name $version not yet available, installing."
-              #fi
-            #fi
+            if [ "$version" != "latest" ] && [ "$version" != "devel" ]; then
+              if check_pkg_availability $name $version; then
+                echo "Package $name $version is already available, skipping."
+                continue
+              else
+                echo "Package $name $version not yet available, installing."
+              fi
+            fi
 
             if [[ "$pkg" =~ .*/.* ]]; then
               echo "Input is a package repository"
               repo="$pkg"
             else
               echo "Input is a package name"
-              echo "name: $name"
               get_repo_from_name $name
-              echo "repo: $repo" 
             fi
             
             install_from_repo "$repo" "$version" "$pkgdir"
