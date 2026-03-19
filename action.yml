@@ -159,12 +159,8 @@ runs:
         }
 
         ############################################
-        install_from_name() {
+        get_repo_from_name() {
           name="$1"
-          version="$2"
-          target="$3"
-
-          echo "Installing $name (version: $version) at $target using name."
         
           load_package_distro
         
@@ -179,8 +175,16 @@ runs:
           repo=$(echo "$pkg" | jq -r '.SourceRepository.URL')
           repo=${repo#https://github.com/}
 
-          install_from_repo "$repo" "$version" "$target"
+          echo $repo
+        }
+        
+        install_from_name() {
+          name="$1"
+          version="$2"
+          target="$3"
 
+          repo=$(get_repo_from_name $name)
+          install_from_repo "$repo" "$version" "$target"
         }
 
         #####################
@@ -212,6 +216,14 @@ runs:
           name=${base%.*}
           name=$(echo "$name" | tr '[:upper:]' '[:lower:]')
           pkgdir="$DEST/$name"
+
+          if [ "$version" != "latest" ]; then
+            # Check if package is already available?
+            if $(check_pkg_availability $name $version); then
+              echo "Package $name $version is already available, skipping."
+              continue
+            fi
+          fi;
 
           echo "Getting package $name with version $version into dir $pkgdir"
          
