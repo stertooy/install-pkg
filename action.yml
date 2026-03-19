@@ -34,12 +34,14 @@ runs:
         echo "Headers: $WGET_HEADER"
 
         ############################################
-        download_and_extract() {
+        install_from_archive() {
           url="$1"
           target="$2"
-          archive="$TMPDIR/archive"
-          extract="$TMPDIR/extract"
+
+          filename=$(basename "$url")
+          archive="$TMPDIR/$filename"
         
+          extract="$TMPDIR/extract"
           rm -rf "$extract"
           mkdir -p "$extract"
         
@@ -72,8 +74,9 @@ runs:
 
         ############################################
         prefer_archive() {
-          base="$1"
-          formats="$2"   # formats: multiple lines
+        
+          base="$1" # base URL without extension
+          formats="$2" # newline-separated list of available archive formats
         
           if echo "$formats" | grep -q "^\.tar\.gz$"; then
             echo "${base}.tar.gz"
@@ -82,13 +85,13 @@ runs:
           elif echo "$formats" | grep -q "^\.zip$"; then
             echo "${base}.zip"
           else
-            echo "No supported archive format found in: $formats"
+            echo "No supported archive format found"
             exit 1
           fi
         }
 
         ############################################
-        resolve_package_info() {
+        install_from_packageinfo() {
         
           info="$1"
           target="$2"
@@ -104,7 +107,7 @@ runs:
           archive_url=$(prefer_archive "$archive_base" "$formats")
           echo "Downloading package archive: $archive_url"
         
-          download_and_extract "$archive_url" "$target"
+          install_from_archive "$archive_url" "$target"
         }
 
         ############################################
@@ -192,7 +195,7 @@ runs:
           wget -O "$TMPDIR/package-info.json" "$asset_url"
         
           echo "Resolving archive from package-info.json"
-          resolve_package_info "$TMPDIR/package-info.json" "$target"
+          install_from_packageinfo "$TMPDIR/package-info.json" "$target"
         }
 
         ############################################
@@ -247,7 +250,7 @@ runs:
             formats=$(echo "$formats" | tr ' ' '\n')
         
             archive_url=$(prefer_archive "$archive_base" "$formats")
-            download_and_extract "$archive_url"
+            install_from_archive "$archive_url"
         
           else
             # "dev"/"devel" or other version → install from repo
@@ -270,6 +273,14 @@ runs:
           echo "$1" | sed -E 's/\.(tar\.gz|tar\.bz2|zip)$//'
         }
 
+        check_pkg_availability() {
+          pkg="$1"
+          ver="$2"
+          gap <<GAPINPUT
+            QuitGap( TestPackageAvailability( "$pkg", "$ver" ) <> fail );
+          GAPINPUT
+        }
+
         ############################################
         for pkg in $PACKAGES; do
           echo "Now handling $pkg"
@@ -290,7 +301,7 @@ runs:
          
           if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
             echo "Detected archive"
-            download_and_extract "$pkg" "$pkgdir"
+            install_from_archive "$pkg" "$pkgdir"
           elif [[ "$pkg" =~ .*/.* ]]; then
             echo "Detected repository"
             install_from_repo "$pkg" "$version" "$pkgdir"
