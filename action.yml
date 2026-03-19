@@ -29,14 +29,8 @@ runs:
         mkdir -p "$TMPDIR"
         
         PKG_DISTRO="$TMPDIR/package-infos.json"
-
-        #if [ "$RUNNER_OS" = "Windows" ]; then
-        #  PKG_DISTRO_NATIVE=$(cygpath -w "$PKG_DISTRO")
-        #else
-          PKG_DISTRO_NATIVE="$PKG_DISTRO"
-        #fi
         
-        WGET_HEADER="Authorization: token ${{ github.token }}"
+        WGET_HEADER="Authorization: token $GITHUB_TOKEN"
         echo "Headers: $WGET_HEADER"
 
         ############################################
@@ -185,7 +179,7 @@ runs:
 
         ############################################
         load_package_distro() {
-          if [ ! -f "$PKG_DISTRO_NATIVE" ]; then
+          if [ ! -f "$PKG_DISTRO" ]; then
         
             url="https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
         
@@ -203,7 +197,7 @@ runs:
               exit 1
             }
         
-            if [ ! -s "$PKG_DISTRO_NATIVE" ]; then
+            if [ ! -s "$PKG_DISTRO" ]; then
               echo "package-infos.json extraction failed"
               exit 1
             fi
@@ -223,7 +217,7 @@ runs:
         
           load_package_distro
         
-          pkg=$(jq -c --arg n "$name" '.[$n]' "$PKG_DISTRO_NATIVE")
+          pkg=$(jq -c --arg n "$name" '.[$n]' "$PKG_DISTRO")
         
           if [ "$pkg" = "null" ] || [ -z "$pkg" ]; then
             echo "Package $name not found"
