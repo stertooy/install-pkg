@@ -224,12 +224,12 @@ runs:
             
             # Check if package is already available
             if [ "$version" != "latest" ] && [ "$version" != "devel" ]; then
-              if check_pkg_availability $name $version; then
-                echo "Package $name $version is already available, skipping."
-                continue
-              else
-                echo "Package $name $version not yet available, installing."
-              fi
+              #if check_pkg_availability $name $version; then
+              #  echo "Package $name $version is already available, skipping."
+              #  continue
+              #else
+              #  echo "Package $name $version not yet available, installing."
+              #fi
             fi;
 
             if [[ "$pkg" =~ .*/.* ]]; then
