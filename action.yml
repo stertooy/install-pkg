@@ -278,7 +278,7 @@ runs:
           ver="$2"
           gap <<GAPINPUT
             QuitGap( TestPackageAvailability( "$pkg", "$ver" ) <> fail );
-          GAPINPUT
+        GAPINPUT
         }
 
         ############################################
