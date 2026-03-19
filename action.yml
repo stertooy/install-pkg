@@ -69,22 +69,16 @@ runs:
         }
 
         ############################################
-        install_from_json() {
-          info="$1"
-          target="$2"
-          
-          echo "Installing package from $info at $target using json."
+        get_pkg_name() {
+          local base=$(basename "$1")
         
-          if [ ! -f "$info" ]; then
-            echo "::error::Could not find package-info.json: $info"
-            exit 1
-          fi
+          # Remove archive suffix
+          base=$(echo "$base" | sed -E 's/\.(tar\.gz|tar\.bz2|zip)$//')
         
-          archive_base=$(jq -r '.ArchiveURL' "$info")
-          formats=$(jq -r '.ArchiveFormats' "$info")
-          formats=$(echo "$formats" | tr ' ' '\n')
-          archive_url=$(prefer_archive "$archive_base" "$formats")
-          download_and_extract "$archive_url" "$target"
+          # Remove version suffix
+          base=$(echo "$base" | sed -E 's/-[0-9]+(\.[0-9]+)*$//')
+        
+          name=$(echo "$base" | tr '[:upper:]' '[:lower:]')
         }
 
         ############################################
@@ -201,9 +195,7 @@ runs:
             pkg="${pkg%@*}"
           fi
           
-          base=$(basename "$pkg")
-          name=${base%%.*}
-          name=$(echo "$name" | tr '[:upper:]' '[:lower:]')
+          get_pkg_name "$pkg"
           pkgdir="$DEST/$name"
 
           if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
