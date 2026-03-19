@@ -18,7 +18,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         gap-version:
           - 'devel'
-          - '4.15'
+          - '4.14'
     steps:
       - uses: stertooy/setup-cygwin@jq
         if: ${{ matrix.os == 'windows-latest' }}
@@ -32,13 +32,16 @@ jobs:
       - uses: ./this-action/
         with:
           packages: |
-            SmallClassNr@dev
+            SmallClassNr@devel
             gap-packages/AutoDoc
             POLYCYCLIC
-            groupoids@1.79
+            groupoids@1.80
             gap-packages/utils@0.92
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
             https://github.com/gap-packages/forms/releases/download/v1.2.14/forms-1.2.14.zip
       - shell: bash
         run: |
-          gap -c 'QuitGap(0);'
+          gap <<GAPInput
+            Print(GAPInfo.UserGapRoot);
+            QuitGap(0);
+          GAPInput
