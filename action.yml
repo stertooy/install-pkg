@@ -33,6 +33,8 @@ runs:
         WGET_HEADER="Authorization: token ${{ github.token }}"
         echo "Headers: $WGET_HEADER"
 
+        TAR="bsdtar"
+
         ############################################
         install_from_archive() {
           url="$1"
@@ -46,7 +48,7 @@ runs:
           wget -O "$archive" "$url"
           
           mkdir -p "$target"
-          tar -xf "$archive" -C "$target"
+          $TAR -xf "$archive" -C "$target"
           ls -a $target
 
           echo "Checking $DEST" for files?
