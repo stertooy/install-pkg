@@ -101,11 +101,9 @@ runs:
           formats=$(jq -r '.ArchiveFormats' "$info")
           formats=$(echo "$formats" | tr ' ' '\n')
           archive_url=$(prefer_archive "$archive_base" "$formats")
-          pkgdir=$(pkg_dir_from_info "$info")
           echo "Downloading package archive: $archive_url"
         
           download_and_extract "$archive_url"
-          echo "$pkgdir"
         }
 
         ############################################
