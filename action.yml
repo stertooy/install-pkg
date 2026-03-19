@@ -200,7 +200,7 @@ runs:
 
           if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
             echo "Input is an archive"
-            download_and_extract "$pkg" "pkgdir"
+            download_and_extract "$pkg" "$pkgdir"
           else
             # Check if package is already available
             if [ "$version" != "latest" ] && [ "$version" != "devel" ]; then
