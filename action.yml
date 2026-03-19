@@ -138,10 +138,17 @@ runs:
             echo "::error::Release has no package-info.json asset"
             exit 1
           fi
-        
-          wget -qO "$TMPDIR/package-info.json" "$asset_url"
-          install_from_json "$TMPDIR/package-info.json" "$target"
-          rm "$TMPDIR/package-info.json"
+
+          info="$TMPDIR/package-info.json"
+          wget -qO "$info" "$asset_url"
+
+          archive_base=$(jq -r '.ArchiveURL' "$info")
+          formats=$(jq -r '.ArchiveFormats' "$info")
+          formats=$(echo "$formats" | tr ' ' '\n')
+          rm "$info"
+          
+          archive_url=$(prefer_archive "$archive_base" "$formats")
+          install_from_arch "$archive_url" "$target"
         }
 
         ############################################
@@ -177,15 +184,6 @@ runs:
 
           echo $repo
         }
-        
-        install_from_name() {
-          name="$1"
-          version="$2"
-          target="$3"
-
-          repo=$(get_repo_from_name $name)
-          install_from_repo "$repo" "$version" "$target"
-        }
 
         #####################
 
@@ -203,39 +201,41 @@ runs:
 
         ############################################
         for pkg in $PACKAGES; do
-          echo "::group::Now handling $pkg"
-        
-          version="latest"
-        
-          if [[ "$pkg" == *@* ]]; then
-            version="${pkg##*@}"
-            pkg="${pkg%@*}"
-          fi
+          echo "::group::Installing $pkg"
           
           base=$(basename "$pkg")
           name=${base%.*}
           name=$(echo "$name" | tr '[:upper:]' '[:lower:]')
           pkgdir="$DEST/$name"
 
-          if [ "$version" != "latest" ]; then
-            # Check if package is already available?
-            if $(check_pkg_availability $name $version); then
-              echo "Package $name $version is already available, skipping."
-              continue
-            fi
-          fi;
-
-          echo "Getting package $name with version $version into dir $pkgdir"
-         
           if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
             echo "Input is an archive"
             install_from_arch "$pkg" "$pkgdir"
-          elif [[ "$pkg" =~ .*/.* ]]; then
-            echo "Input is a package repository"
-            install_from_repo "$pkg" "$version" "$pkgdir"
           else
-            echo "Input is a package name"
-            install_from_name "$name" "$version" "$pkgdir"
+            version="latest"
+
+            if [[ "$pkg" == *@* ]]; then
+              version="${pkg##*@}"
+              pkg="${pkg%@*}"
+            fi
+            
+            # Check if package is already available
+            if [ "$version" != "latest" ]; then
+              if check_pkg_availability $name $version; then
+                echo "Package $name $version is already available, skipping."
+                continue
+              fi
+            fi;
+
+            if [[ "$pkg" =~ .*/.* ]]; then
+              echo "Input is a package repository"
+              repo="$pkg"
+            else
+              echo "Input is a package name"
+              repo=$(get_repo_from_name $name)
+            fi
+            
+            install_from_repo "$pkg" "$version" "$pkgdir"
           fi
         
           echo "Building package in $pkgdir"
