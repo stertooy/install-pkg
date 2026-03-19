@@ -20,17 +20,16 @@ runs:
       run: |
         # Convert newlines to spaces
         PACKAGES=$(echo "${{ inputs.packages }}" | tr '\n' ' ')
-
-        DEST="$HOME/.gap/pkg"
-        mkdir -p "$DEST"
-
+     
         if [ "$RUNNER_OS" = "Windows" ]; then
-          # convert Windows path to Cygwin path
-          TMPROOT=$(cygpath -u "$RUNNER_TEMP")
+          DEST="$HOME/_gap/pkg"
+          TMPROOT=$(cygpath -u "$RUNNER_TEMP/install-pkg")
         else
-          TMPROOT="$RUNNER_TEMP"
+          DEST="$HOME/.gap/pkg"
+          TMPROOT="$RUNNER_TEMP/install-pkg"
         fi
-        TMPDIR="$TMPROOT/install-pkg"
+        
+        mkdir -p "$DEST"
         mkdir -p "$TMPDIR"
         
         PKG_DISTRO="$TMPDIR/package-infos.json"
