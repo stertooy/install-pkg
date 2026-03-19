@@ -25,17 +25,16 @@ runs:
         else
           TMPROOT="$RUNNER_TEMP"
         fi
-        
         TMPDIR="$TMPROOT/install-pkg"
         mkdir -p "$TMPDIR"
         
         PKG_DISTRO="$TMPDIR/package-infos.json"
 
-        if [ "$RUNNER_OS" = "Windows" ]; then
-          PKG_DISTRO_NATIVE=$(cygpath -w "$PKG_DISTRO")
-        else
+        #if [ "$RUNNER_OS" = "Windows" ]; then
+        #  PKG_DISTRO_NATIVE=$(cygpath -w "$PKG_DISTRO")
+        #else
           PKG_DISTRO_NATIVE="$PKG_DISTRO"
-        fi
+        #fi
         
         WGET_HEADER="Authorization: token ${{ github.token }}"
         echo "Headers: $WGET_HEADER"
