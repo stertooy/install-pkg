@@ -71,13 +71,12 @@ runs:
         ############################################
         get_pkg_name() {
           local base=$(basename "$1")
-        
+      
           # Remove archive suffix
           base=$(echo "$base" | sed -E 's/\.(tar\.gz|tar\.bz2|zip)$//')
-        
           # Remove version suffix
           base=$(echo "$base" | sed -E 's/-[0-9]+(\.[0-9]+)*$//')
-        
+          # Convert to lowecase
           name=$(echo "$base" | tr '[:upper:]' '[:lower:]')
         }
 
@@ -127,22 +126,23 @@ runs:
           local archive_base=$(jq -r '.ArchiveURL' "$info")
           local formats=$(jq -r '.ArchiveFormats' "$info")
           formats=$(echo "$formats" | tr ' ' '\n')
-          
+
           version_sel=$(jq -r '.Version' "$info")
+          echo "Given version: $version | Selected version: $version_sel"
           archive_url=$(prefer_archive "$archive_base" "$formats")
           
           rm "$info"
         }
 
         ############################################
-        load_package_distro() {
+        get_package_distro() {
           if [ ! -f "$PKG_DISTRO" ]; then
             # echo "Downloading packages-infos.json from PackageDistro"
-            distro="$TMPDIR/package-infos.json.gz"
+            local distro="$TMPDIR/package-infos.json.gz"
             wget -qO "$distro" "https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
             gunzip "$distro"
             if [ ! -s "$PKG_DISTRO" ]; then
-              echo "::error::package-infos.json could not be obtained"
+              echo "::error::Could not download PackageDistro json"
               exit 1
             fi
           fi
@@ -152,7 +152,7 @@ runs:
         get_repo_from_name() {
           local name="$1"
         
-          load_package_distro
+          get_package_distro
         
           local pkg=$(jq -c --arg n "$name" '.[$n]' "$PKG_DISTRO")
         
@@ -229,7 +229,7 @@ runs:
               # Another availability check, this time for latest version
               if [ "$version" = "latest" ]; then
                 if check_pkg_availability $name $version_sel; then
-                  echo "Package $name $version is already available, skipping."
+                  echo "Package $name $version_sel is already available, skipping."
                   continue
                 else
                   echo "Package $name $version_sel not yet available, installing."
