@@ -151,7 +151,6 @@ runs:
             target="$TMPDIR/package-infos.json.gz"
             wget -qO "$target" "https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
             gunzip -v "$target"
-            rm "$target"
             if [ ! -s "$PKG_DISTRO" ]; then
               echo "::error::package-infos.json could not be obtained"
               exit 1
