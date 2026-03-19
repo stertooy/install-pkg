@@ -25,7 +25,7 @@ runs:
         mkdir -p "$DEST"
 
         if [ "$RUNNER_OS" = "Windows" ]; then
-          # Convert Windows path (D:\...) to Cygwin path (/cygdrive/d/...)
+          # convert Windows path to Cygwin path
           TMPROOT=$(cygpath -u "$RUNNER_TEMP")
         else
           TMPROOT="$RUNNER_TEMP"
@@ -34,9 +34,7 @@ runs:
         mkdir -p "$TMPDIR"
         
         PKG_DISTRO="$TMPDIR/package-infos.json"
-        
         WGET_HEADER="Authorization: token ${{ github.token }}"
-        echo "Headers: $WGET_HEADER"
 
         ############################################
         install_from_archive() {
@@ -187,25 +185,11 @@ runs:
         ############################################
         load_package_distro() {
           if [ ! -f "$PKG_DISTRO" ]; then
-        
-            url="https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
-        
-            echo "Downloading package list from $url"
-        
-            wget -qO "$TMPDIR/package-infos.json.gz" "$url" || {
-              echo "Failed to download package-infos.json.gz"
-              exit 1
-            }
-        
-            echo "Extracting package-infos.json"
-        
-            gunzip -v "$TMPDIR/package-infos.json.gz" || {
-              echo "gunzip failed"
-              exit 1
-            }
-        
+            echo "Downloading packages-infos.json from PackageDistro"
+            wget -qO "$TMPDIR/package-infos.json.gz" "https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
+            gunzip -v "$TMPDIR/package-infos.json.gz"
             if [ ! -s "$PKG_DISTRO" ]; then
-              echo "package-infos.json extraction failed"
+              echo "::error::package-infos.json could not be obtained"
               exit 1
             fi
           fi
