@@ -32,7 +32,7 @@ jobs:
       - uses: ./this-action/
         with:
           packages: |
-            SmallClassNr@dev
+            SmallClassNr@devel
             gap-packages/AutoDoc
             POLYCYCLIC
             groupoids@1.79
