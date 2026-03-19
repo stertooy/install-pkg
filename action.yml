@@ -167,11 +167,11 @@ runs:
 
         ############################################
         get_repo_from_name() {
-          name="$1"
+          local name="$1"
         
           load_package_distro
         
-          pkg=$(jq -c --arg n "$name" '.[$n]' "$PKG_DISTRO")
+          local pkg=$(jq -c --arg n "$name" '.[$n]' "$PKG_DISTRO")
         
           if [ "$pkg" = "null" ] || [ -z "$pkg" ]; then
             echo "::error::Package $name not found in PackageDistro"
@@ -179,10 +179,12 @@ runs:
           fi
         
           # Don't try to get URL from PackageDistro - may not be merged yet!
-          repo=$(echo "$pkg" | jq -r '.SourceRepository.URL')
-          repo=${repo#https://github.com/}
+          local repo_url=$(echo "$pkg" | jq -r '.SourceRepository.URL') || {
+            echo "::error::Package $name not found in PackageDistro"
+            exit 1
+          }
+          repo=${repo_url#https://github.com/}
 
-          echo $repo
         }
 
         #####################
@@ -206,6 +208,12 @@ runs:
         for pkg in $PACKAGES; do
           echo "::group::Installing $pkg"
           
+          version="latest"
+          if [[ "$pkg" == *@* ]]; then
+            version="${pkg##*@}"
+            pkg="${pkg%@*}"
+          fi
+          
           base=$(basename "$pkg")
           name=${base%%.*}
           name=$(echo "$name" | tr '[:upper:]' '[:lower:]')
@@ -215,13 +223,6 @@ runs:
             echo "Input is an archive"
             install_from_arch "$pkg" "$pkgdir"
           else
-            version="latest"
-
-            if [[ "$pkg" == *@* ]]; then
-              version="${pkg##*@}"
-              pkg="${pkg%@*}"
-            fi
-            
             # Check if package is already available
             #if [ "$version" != "latest" ] && [ "$version" != "devel" ]; then
               #if check_pkg_availability $name $version; then
@@ -238,7 +239,7 @@ runs:
             else
               echo "Input is a package name"
               echo "name: $name"
-              repo=$(get_repo_from_name $name)
+              get_repo_from_name $name
               echo "repo: $repo" 
             fi
             
