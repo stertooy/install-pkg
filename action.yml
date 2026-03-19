@@ -236,7 +236,7 @@ runs:
                 fi
               fi
               
-              download_and_extractive "$archive_url" "pkgdir"
+              download_and_extract "$archive_url" "pkgdir"
             fi
           fi
           
