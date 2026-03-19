@@ -207,7 +207,7 @@ runs:
           echo "::group::Installing $pkg"
           
           base=$(basename "$pkg")
-          name=${base%.*}
+          name=${base%%.*}
           name=$(echo "$name" | tr '[:upper:]' '[:lower:]')
           pkgdir="$DEST/$name"
 
