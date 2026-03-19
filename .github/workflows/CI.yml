@@ -41,4 +41,7 @@ jobs:
             https://github.com/gap-packages/forms/releases/download/v1.2.14/forms-1.2.14.zip
       - shell: bash
         run: |
-          gap -c 'QuitGap(0);'
+          gap <<GAPInput
+            Print(GAPInfo.UserGapRoot);
+            QuitGap(0);
+          GAPInput
