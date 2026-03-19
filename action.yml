@@ -38,7 +38,8 @@ runs:
         ##### BEGIN HELPER FUNCTIONS #####
         # Download archive and extract to folder
         download_and_extract() {
-          local filename=$(basename "$1")
+          local url="$1"
+          local filename=$(basename "$url")
           local target="$2"
           
           echo "Installing $filename at $target."
