@@ -297,7 +297,7 @@ runs:
             install_from_repo "$pkg" "$version" "$pkgdir"
           else
             echo "Detected package name"
-            install_from_name "$pkg" "$version" "$pkgdir"
+            install_from_name "$name" "$version" "$pkgdir"
           fi
         
           echo "Building package in $pkgdir"
