@@ -88,30 +88,18 @@ runs:
         }
 
         ############################################
-        install_from_repo() {
-          repo="$1"
-          version="$2"
-          target="$3"
-
-          echo "Installing $repo (version: $version) at $target using repo."
-        
-          # If version is "devel", clone default branch
-          if [ "$version" = "devel" ]; then
-            echo "Cloning development branch of $repo"
-            git clone "https://github.com/$repo.git" "$target"
-            return
-          fi
-        
+        get_archive_url() {
+          local repo="$1"
+          local version="$2"
+          
           if [ "$version" = "latest" ]; then
             echo "Fetching latest release for $repo"
-            wget --header="$WGET_HEADER" -qO "$TMPDIR/release.json" \
-              "https://api.github.com/repos/$repo/releases/latest"
+            wget --header="$WGET_HEADER" -qO "$TMPDIR/release.json" "https://api.github.com/repos/$repo/releases/latest"
           else
             echo "Selecting oldest release >= $version"
-            wget --header="$WGET_HEADER" -qO "$TMPDIR/releases.json" \
-              "https://api.github.com/repos/$repo/releases"
+            wget --header="$WGET_HEADER" -qO "$TMPDIR/releases.json" "https://api.github.com/repos/$repo/releases"
         
-            release=$(jq -c --arg v "$version" '
+            local release=$(jq -c --arg v "$version" '
               map(. + {ver:(.tag_name|sub("^v";""))})
               | sort_by(.ver)
               | map(select(.ver >= $v))
@@ -127,28 +115,29 @@ runs:
             rm "$TMPDIR/releases.json"
           fi
           
-          asset_url=$(jq -r '
+          local asset_url=$(jq -r '
             .assets[]
             | select(.name=="package-info.json")
             | .browser_download_url
           ' "$TMPDIR/release.json")
           rm "$TMPDIR/release.json"
-        
+
           if [ -z "$asset_url" ] || [ "$asset_url" = "null" ]; then
             echo "::error::Release has no package-info.json asset"
             exit 1
           fi
 
-          info="$TMPDIR/package-info.json"
+          local info="$TMPDIR/package-info.json"
           wget -qO "$info" "$asset_url"
 
-          archive_base=$(jq -r '.ArchiveURL' "$info")
-          formats=$(jq -r '.ArchiveFormats' "$info")
+          local archive_base=$(jq -r '.ArchiveURL' "$info")
+          local formats=$(jq -r '.ArchiveFormats' "$info")
           formats=$(echo "$formats" | tr ' ' '\n')
-          rm "$info"
           
+          version_sel=$(jq -r '.Version' "$info")
           archive_url=$(prefer_archive "$archive_base" "$formats")
-          install_from_arch "$archive_url" "$target"
+          
+          rm "$info"
         }
 
         ############################################
@@ -196,7 +185,7 @@ runs:
         check_pkg_availability() {
           pkg="$1"
           ver="$2"
-          gap -q <<GAPINPUT
+          gap -A -q <<GAPINPUT
             QuitGap( TestPackageAvailability( "$pkg", "$ver" ) <> fail );
         GAPINPUT
           return $?
@@ -219,7 +208,7 @@ runs:
 
           if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
             echo "Input is an archive"
-            install_from_arch "$pkg" "$pkgdir"
+            install_from_archive "$pkg" "pkgdir"
           else
             # Check if package is already available
             if [ "$version" != "latest" ] && [ "$version" != "devel" ]; then
@@ -238,10 +227,27 @@ runs:
               echo "Input is a package name"
               get_repo_from_name $name
             fi
-            
-            install_from_repo "$repo" "$version" "$pkgdir"
+
+            if [ "$version" = "devel" ]; then
+              echo "Cloning development branch of $repo"
+              git clone "https://github.com/$repo.git" "$target"
+            else
+              get_archive_url "$repo" "$version"
+              
+              # Another availability check, this time for latest version
+              if [ "$version" = "latest" ]; then
+                if check_pkg_availability $name $version_sel; then
+                  echo "Package $name $version is already available, skipping."
+                  continue
+                else
+                  echo "Package $name $version_sel not yet available, installing."
+                fi
+              fi
+              
+              install_from_archive "$archive_url" "pkgdir"
+            fi
           fi
-        
+          
           echo "Building package in $pkgdir"
         
           (
