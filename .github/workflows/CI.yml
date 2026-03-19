@@ -40,6 +40,7 @@ jobs:
             groupoids@1.79
             gap-packages/utils@0.92
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
+            https://github.com/gap-packages/float/archive/refs/tags/v1.0.9.zip
 
   test-platforms:
       name: "Test on ${{ matrix.os }}, GAP version ${{ matrix.gap-version }}"
@@ -71,4 +72,5 @@ jobs:
               groupoids@1.79
               gap-packages/utils@0.92
               https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
+              https://github.com/gap-packages/float/archive/refs/tags/v1.0.9.zip
 
