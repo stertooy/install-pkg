@@ -18,21 +18,23 @@ download_and_extract() {
 }
 
 # Create valid archive url from base url and possible formats
-prefer_archive() {
+combine_url() {
   local base="$1"
   local formats="$2" # newline-separated list
 
+  declare -g archive_url
   # Prefer .tar.gz if available
   if echo "${formats}" | grep -q "^\.tar\.gz$"; then
-    echo "${base}.tar.gz"
+    archive_url="${base}.tar.gz"
   elif echo "${formats}" | grep -q "^\.tar\.bz2$"; then
-    echo "${base}.tar.bz2"
+    archive_url="${base}.tar.bz2"
   elif echo "${formats}" | grep -q "^\.zip$"; then
-    echo "${base}.zip"
+    archive_url="${base}.zip"
   else
     echo "::error::No supported archive format found"
     exit 1
   fi
+  export archive_url
 }
 
 # Get package name
@@ -45,7 +47,7 @@ get_pkg_name() {
   # Remove version suffix
   base=$(echo "${base}" | sed -E 's/-[0-9]+(\.[0-9]+)*$//')
   # Convert to lowecase
-  name=$(echo "${base}" | tr '[:upper:]' '[:lower:]')
+  export name=$(echo "${base}" | tr '[:upper:]' '[:lower:]')
 }
 
 # Get archive URL
@@ -104,8 +106,8 @@ get_archive_url() {
   version=$(jq -r '.Version' "${info}")
   echo "Selected version ${version} from ${repo} releases"
   declare -g archive_url
-  archive_url=$(prefer_archive "${archive_base}" "${formats}")
-  
+  combine_url "${archive_base}" "${formats}"
+  export archive_url
   rm "${info}"
 }
 
@@ -145,8 +147,8 @@ get_repo_from_name() {
     echo "::error::Package ${name} not found in PackageDistro"
     exit 1
   }
-  repo=${repo_url#https://github.com/}
-
+  declare -g repo
+  export repo=${repo_url#https://github.com/}
 }
 
 # Use GAP to check if package-version combination is already installed
