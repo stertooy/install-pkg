@@ -14,6 +14,7 @@ download_and_extract() {
   wget -qO "${archive}" "${url}"
   mkdir -p "${target}"
   bsdtar -xf "${archive}" -C "${target}"
+  ls -a "${target}"
   rm "${archive}"
 }
 
