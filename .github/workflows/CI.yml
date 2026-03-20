@@ -20,16 +20,23 @@ jobs:
           - 'devel'
           - '4.14'
     steps:
-      - uses: stertooy/setup-cygwin@jq
+      # TODO: replace by gap-actions repository when merged
+      - name: "Setup Cygwin"
+        uses: stertooy/setup-cygwin@jq
         if: ${{ matrix.os == 'windows-latest' }}
+        
       - name: "Check out this repository"
         uses: actions/checkout@v6
         with:
           path: this-action/
-      - uses: gap-actions/setup-gap@v3
+          
+      - name: "Setup GAP"
+        uses: gap-actions/setup-gap@v3
         with:
           gap-version: ${{ matrix.gap-version }}
-      - uses: ./this-action/
+          
+      - name: "Install additional GAP packages"
+        uses: ./this-action/
         with:
           packages: |
             SmallClassNr@devel
@@ -39,12 +46,6 @@ jobs:
             gap-packages/utils@0.92
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
             https://github.com/gap-packages/forms/releases/download/v1.2.14/forms-1.2.14.zip
-      - shell: bash
-        run: |
-          gap <<GAPInput
-            Print(GAPInfo.UserGapRoot);
-            QuitGap(0);
-          GAPInput
 
   test-scripts:
     name: "Test the scripts used by this action"
