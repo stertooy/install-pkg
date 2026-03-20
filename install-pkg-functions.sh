@@ -13,7 +13,7 @@ download_and_extract() {
   local archive="${TMPDIR}/${filename}"
   wget -qO "${archive}" "${url}"
   mkdir -p "${target}"
-  bsdtar -xf "${archive}" -C "${target}"
+  bsdtar -xf "${archive}" -C "${target}" --strip-components=1
   ls -a "${target}"
   rm "${archive}"
 }
