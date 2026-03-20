@@ -47,6 +47,20 @@ jobs:
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
             https://github.com/gap-packages/forms/releases/download/v1.2.14/forms-1.2.14.zip
 
+      - name: "Check GAP"
+        shell: bash
+        run: |
+          gap -A <<GAPInput
+            LoadPackage("SmallClassNr":OnlyNeeded);
+            LoadPackage("Autodoc":OnlyNeeded);
+            LoadPackage("Polycyclic":OnlyNeeded);
+            LoadPackage("groupoids":OnlyNeeded);
+            LoadPackage("utils":OnlyNeeded);
+            LoadPackage("grpconst":OnlyNeeded);
+            LoadPackage("forms":OnlyNeeded);
+            QUIT_GAP(0);
+          GAPInput
+
   test-scripts:
     name: "Test the scripts used by this action"
     runs-on: ubuntu-slim
