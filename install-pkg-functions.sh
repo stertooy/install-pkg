@@ -13,7 +13,12 @@ download_and_extract() {
   local archive="${TMPDIR}/${filename}"
   wget -qO "${archive}" "${url}"
   mkdir -p "${target}"
-  bsdtar -xf "${archive}" -C "${target}"
+  if [[ "${archive}" == *.zip ]]; then
+    unzip "${archive}" -d "${target}"
+  else
+    tar -xf "${archive}" -C "${target}"
+  fi
+  ls -a ${target}
   rm "${archive}"
 }
 
