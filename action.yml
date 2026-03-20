@@ -15,241 +15,73 @@ runs:
       if: ${{ runner.os == 'Linux' }}
       shell: bash
       run: sudo apt install -y libarchive-tools # bsdtar
+
     - name: Install GAP packages
       shell: bash
       run: |
         # Convert newlines to spaces
         PACKAGES=$(echo "${{ inputs.packages }}" | tr '\n' ' ')
      
-        if [ "$RUNNER_OS" = "Windows" ]; then
-          DEST="$HOME/_gap/pkg"
-          TMPDIR=$(cygpath -u "$RUNNER_TEMP/install-pkg")
+        if [[ "${RUNNER_OS}" = "Windows" ]]; then
+          TMPDIR=$(cygpath -u "${RUNNER_TEMP}/install-pkg")
         else
-          DEST="$HOME/.gap/pkg"
-          TMPDIR="$RUNNER_TEMP/install-pkg"
+          TMPDIR="${RUNNER_TEMP}/install-pkg"
         fi
         
-        mkdir -p "$DEST"
-        mkdir -p "$TMPDIR"
+        mkdir -p "${TMPDIR}"
+        DEST="${GAPROOT}/pkg"
+        PKG_DISTRO="${TMPDIR}/package-infos.json"
         
-        PKG_DISTRO="$TMPDIR/package-infos.json"
+        # Needed to get reasonable API limits
         WGET_HEADER="Authorization: token ${{ github.token }}"
 
-        ##### BEGIN HELPER FUNCTIONS #####
-        # Download archive and extract to folder
-        download_and_extract() {
-          local url="$1"
-          local filename=$(basename "$url")
-          local target="$2"
-          
-          echo "Installing $filename at $target."
-          
-          local archive="$TMPDIR/$filename"
-          wget -qO "$archive" "$url"
-          mkdir -p "$target"
-          bsdtar -xf "$archive" -C "$target"
-          rm "$archive"
-        }
+        # Load helper functions
+        source "${GITHUB_ACTION_PATH}/install-pkg-functions.sh"
         
-        # Create valid archive url from base url and possible formats
-        prefer_archive() {
-          local base="$1"
-          local formats="$2" # newline-separated list
-
-          # Prefer .tar.gz if available
-          if echo "$formats" | grep -q "^\.tar\.gz$"; then
-            echo "${base}.tar.gz"
-          elif echo "$formats" | grep -q "^\.tar\.bz2$"; then
-            echo "${base}.tar.bz2"
-          elif echo "$formats" | grep -q "^\.zip$"; then
-            echo "${base}.zip"
-          else
-            echo "::error::No supported archive format found"
-            exit 1
-          fi
-        }
-
-        # Get package name
-        get_pkg_name() {
-          local base=$(basename "$1")
-      
-          # Remove archive suffix
-          base=$(echo "$base" | sed -E 's/\.(tar\.gz|tar\.bz2|zip)$//')
-          # Remove version suffix
-          base=$(echo "$base" | sed -E 's/-[0-9]+(\.[0-9]+)*$//')
-          # Convert to lowecase
-          name=$(echo "$base" | tr '[:upper:]' '[:lower:]')
-        }
-
-        # Get archive URL
-        get_archive_url() {
-          local repo="$1"
-          local version="$2"
-          
-          if [ "$version" = "latest" ]; then
-            echo "Fetching latest release for $repo"
-            wget --header="$WGET_HEADER" -qO "$TMPDIR/release.json" "https://api.github.com/repos/$repo/releases/latest"
-          else
-            echo "Selecting oldest release >= $version"
-            wget --header="$WGET_HEADER" -qO "$TMPDIR/releases.json" "https://api.github.com/repos/$repo/releases"
-        
-            local release=$(jq -c --arg v "$version" '
-              map(. + {ver:(.tag_name|sub("^v";""))})
-              | sort_by(.ver)
-              | map(select(.ver >= $v))
-              | .[0]
-            ' "$TMPDIR/releases.json")
-        
-            if [ "$release" = "null" ] || [ -z "$release" ]; then
-              echo "::error::No release >= $version found"
-              exit 1
-            fi
-        
-            echo "$release" > "$TMPDIR/release.json"
-            rm "$TMPDIR/releases.json"
-          fi
-          
-          local asset_url=$(jq -r '
-            .assets[]
-            | select(.name=="package-info.json")
-            | .browser_download_url
-          ' "$TMPDIR/release.json")
-          rm "$TMPDIR/release.json"
-
-          if [ -z "$asset_url" ] || [ "$asset_url" = "null" ]; then
-            echo "::error::Release has no package-info.json asset"
-            exit 1
-          fi
-
-          local info="$TMPDIR/package-info.json"
-          wget -qO "$info" "$asset_url"
-
-          local archive_base=$(jq -r '.ArchiveURL' "$info")
-          local formats=$(jq -r '.ArchiveFormats' "$info")
-          formats=$(echo "$formats" | tr ' ' '\n')
-
-          version_sel=$(jq -r '.Version' "$info")
-          echo "Given version: $version | Selected version: $version_sel"
-          archive_url=$(prefer_archive "$archive_base" "$formats")
-          
-          rm "$info"
-        }
-
-        # Get PackageDistro information
-        get_package_distro() {
-          if [ ! -f "$PKG_DISTRO" ]; then
-            echo "Downloading packages-infos.json from PackageDistro"
-            local distro="$TMPDIR/package-infos.json.gz"
-            wget -qO "$distro" "https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
-            gunzip "$distro"
-            if [ ! -s "$PKG_DISTRO" ]; then
-              echo "::error::Could not download PackageDistro json"
-              exit 1
-            fi
-          fi
-        }
-
-        # Get repository name from package name using PackageDistro
-        get_repo_from_name() {
-          local name="$1"
-        
-          get_package_distro
-        
-          local pkg=$(jq -c --arg n "$name" '.[$n]' "$PKG_DISTRO")
-        
-          if [ "$pkg" = "null" ] || [ -z "$pkg" ]; then
-            echo "::error::Package $name not found in PackageDistro"
-            exit 1
-          fi
-        
-          # Don't try to get URL from PackageDistro - latest version not be merged yet!
-          local repo_url=$(echo "$pkg" | jq -r '.SourceRepository.URL') || {
-            echo "::error::Package $name not found in PackageDistro"
-            exit 1
-          }
-          repo=${repo_url#https://github.com/}
-
-        }
-
-        # Use GAP to check if package-version combination is already installed
-        check_pkg_availability() {
-          local pkg="$1"
-          local ver="$2"
-          gap -A -q <<GAPINPUT
-            QuitGap( TestPackageAvailability( "$pkg", "$ver" ) <> fail );
-        GAPINPUT
-          return $?
-        }
-
-        # Build package
-        build_pkg() {
-          echo "TODO - build package here"
-        }
-
-        ##### END HELPER FUNCTIONS #####
-        for pkg in $PACKAGES; do
-          echo "::group::Installing $pkg"
+        for pkg in ${PACKAGES}; do
+          echo "::group::Installing ${pkg}"
           
           version="latest"
-          if [[ "$pkg" == *@* ]]; then
+
+          # Split off version, if present
+          if [[ "${pkg}" == *@* ]]; then
             version="${pkg##*@}"
             pkg="${pkg%@*}"
           fi
-          
-          get_pkg_name "$pkg"
-          pkgdir="$DEST/$name"
 
-          if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
+          # Set the $name variable
+          get_pkg_name "${pkg}"
+          pkgdir="${DEST}/${name}"
+
+          if [[ "${pkg}" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
             echo "Input is an archive"
-            download_and_extract "$pkg" "$pkgdir"
+            
+            download_and_extract "${pkg}" "${pkgdir}"
           else
-            # Check if package is already available
-            if [ "$version" != "latest" ] && [ "$version" != "devel" ]; then
-              if check_pkg_availability $name $version; then
-                echo "Package $name $version is already available, skipping."
-                continue
-              else
-                echo "Package $name $version not yet available, installing."
-              fi
-            fi
-
-            if [[ "$pkg" =~ .*/.* ]]; then
+            # Set the $repo variable
+            if [[ "${pkg}" =~ .*/.* ]]; then
               echo "Input is a package repository"
-              repo="$pkg"
+              repo="${pkg}"
             else
               echo "Input is a package name"
-              get_repo_from_name $name
+              get_repo_from_name "${name}"
             fi
 
-            if [ "$version" = "devel" ]; then
-              echo "Cloning development branch of $repo"
-              git clone "https://github.com/$repo.git" "$pkgdir"
+            if [[ "${version}" = "devel" ]]; then
+              echo "Cloning development branch of ${repo} to ${pkgdir}"
+              clear_dest "${pkgdir}"
+              git clone -q --depth=1 --single-branch "https://github.com/${repo}.git" "${pkgdir}"
             else
-              get_archive_url "$repo" "$version"
+              # Set the $archive_url variable and update the $version variable
+              get_archive_url "${repo}" "${version}"
               
-              # Another availability check, this time for latest version
-              if [ "$version" = "latest" ]; then
-                if check_pkg_availability $name $version_sel; then
-                  echo "Package $name $version_sel is already available, skipping."
+              # Check if package version is already available
+              if check_pkg_availability "${name}" "${version}"; then
+                  echo "Package ${name} ${version} is already available, skipping."
                   continue
-                else
-                  echo "Package $name $version_sel not yet available, installing."
-                fi
               fi
               
-              download_and_extract "$archive_url" "$pkgdir"
+              download_and_extract "${archive_url}" "${pkgdir}"
             fi
           fi
-          
-          echo "Building package in $pkgdir"
-        
-          (
-            cd "$pkgdir" || {
-              echo "Directory $pkgdir not found"
-              exit 1
-            }
-            echo "now inside $pkgdir"
-            build_pkg
-          )
-        
         done

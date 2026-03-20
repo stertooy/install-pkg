@@ -45,3 +45,16 @@ jobs:
             Print(GAPInfo.UserGapRoot);
             QuitGap(0);
           GAPInput
+
+  test-scripts:
+    name: "Test the scripts used by this action"
+    runs-on: ubuntu-slim
+
+    steps:
+
+      - name: "Check out this repository"
+        uses: actions/checkout@v6
+
+      - name: "Shellcheck"
+        shell: bash
+        run: shellcheck -e SC2034,SC2154 -o all *.sh
