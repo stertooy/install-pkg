@@ -22,7 +22,7 @@ jobs:
     steps:
       # TODO: replace by gap-actions repository when merged
       - name: "Setup Cygwin"
-        uses: stertooy/setup-cygwin@jq
+        uses: stertooy/setup-cygwin@install-jq-and-bsdtar
         if: ${{ matrix.os == 'windows-latest' }}
         
       - name: "Check out this repository"
