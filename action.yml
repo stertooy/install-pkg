@@ -1,48 +1,87 @@
 name: 'Install packages'
 description: 'Install additional GAP packages'
+
 inputs:
   packages:
     description: 'Space-separated list of packages to install'
     required: true
     default: ''
-  ignore-errors:
-    description: 'Ignore errors when installing'
-    required: false
-    default: 'false'
-  use-latex:
-    description: "Install and use latex (only works on Linux)"
-    required: false
-    default: "false"
 
 runs:
   using: "composite"
   steps:
-    - name: "Install TeX Live"
-      if: ${{ inputs.use-latex == 'true' }}
+
+    - name: Install bsdtar
+      if: ${{ runner.os == 'Linux' }}
       shell: bash
-      run: |
-        sudo apt-get install --no-install-recommends texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
-    - name: "Run tests"
+      run: sudo apt install -y libarchive-tools # bsdtar
+
+    - name: Install GAP packages
       shell: bash
       run: |
         # Convert newlines to spaces
-        PKGS=$(echo "${{ inputs.packages }}" | tr '\n' ' ')
+        PACKAGES=$(echo "${{ inputs.packages }}" | tr '\n' ' ')
+     
+        if [[ "${RUNNER_OS}" = "Windows" ]]; then
+          TMPDIR=$(cygpath -u "${RUNNER_TEMP}/install-pkg")
+        else
+          TMPDIR="${RUNNER_TEMP}/install-pkg"
+        fi
+        
+        mkdir -p "${TMPDIR}"
+        DEST="${GAPROOT}/pkg"
+        PKG_DISTRO="${TMPDIR}/package-infos.json"
+        
+        # Needed to get reasonable API limits
+        WGET_HEADER="Authorization: token ${{ github.token }}"
 
-        error_found=false
-        # Use `gap` instead of `$GAP` to avoid quitonbreak
-        for pkg in $PKGS; do
-          if ! gap -A <<GAPInput
-            LoadPackage("PackageManager");
-            QUIT_GAP(InstallPackage("${pkg}"));
-        GAPInput
-          then
-            error_found=true
-            echo "::error::Installation of ${pkg} may have failed"
+        # Load helper functions
+        source "${GITHUB_ACTION_PATH}/install-pkg-functions.sh"
+        
+        for pkg in ${PACKAGES}; do
+          echo "::group::Installing ${pkg}"
+          
+          version="latest"
+
+          # Split off version, if present
+          if [[ "${pkg}" == *@* ]]; then
+            version="${pkg##*@}"
+            pkg="${pkg%@*}"
+          fi
+
+          # Set the $name variable
+          get_pkg_name "${pkg}"
+          pkgdir="${DEST}/${name}"
+
+          if [[ "${pkg}" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
+            echo "Input is an archive"
+            
+            download_and_extract "${pkg}" "${pkgdir}"
+          else
+            # Set the $repo variable
+            if [[ "${pkg}" =~ .*/.* ]]; then
+              echo "Input is a package repository"
+              repo="${pkg}"
+            else
+              echo "Input is a package name"
+              get_repo_from_name "${name}"
+            fi
+
+            if [[ "${version}" = "devel" ]]; then
+              echo "Cloning development branch of ${repo} to ${pkgdir}"
+              clear_dest "${pkgdir}"
+              git clone -q --depth=1 --single-branch "https://github.com/${repo}.git" "${pkgdir}"
+            else
+              # Set the $archive_url variable and update the $version variable
+              get_archive_url "${repo}" "${version}"
+              
+              # Check if package version is already available
+              if check_pkg_availability "${name}" "${version}"; then
+                  echo "Package ${name} ${version} is already available, skipping."
+                  continue
+              fi
+              
+              download_and_extract "${archive_url}" "${pkgdir}"
+            fi
           fi
         done
-
-        # Exit unless ignore-errors is set to true
-        if [[ "${{ inputs.ignore-errors }}" != "true" && "$error_found" = "true" ]]; then
-          exit 1
-        fi
-          
