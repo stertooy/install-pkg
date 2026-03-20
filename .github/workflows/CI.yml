@@ -54,7 +54,7 @@ jobs:
             chck := function( pkg, ver )
               local test;
               test := TestPackageAvailability( pkg, ver );
-              Print(test);
+              Print(test,"\n");
               return test <> fail;
             end;;
             bool :=
