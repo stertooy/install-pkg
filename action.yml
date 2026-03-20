@@ -35,7 +35,7 @@ runs:
         WGET_HEADER="Authorization: token ${{ github.token }}"
 
         # Load helper functions
-        source ./install-pkg-functions.sh
+        source $GITHUB_ACTION_PATH/install-pkg-functions.sh
         
         for pkg in $PACKAGES; do
           echo "::group::Installing $pkg"
