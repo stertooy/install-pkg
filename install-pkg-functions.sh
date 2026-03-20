@@ -53,7 +53,7 @@ get_archive_url() {
   local repo="$1"
   local version="$2"
   
-  if [ "${version}" = "latest" ]; then
+  if [[ "${version}" = "latest" ]]; then
     echo "Fetching latest release for ${repo}"
     wget --header="${WGET_HEADER}" -qO "${TMPDIR}/release.json" "https://api.github.com/repos/${repo}/releases/latest"
   else
@@ -85,7 +85,7 @@ get_archive_url() {
   ' "${TMPDIR}/release.json")
   rm "${TMPDIR}/release.json"
 
-  if [ -z "${asset_url}" ] || [ "${asset_url}" = "null" ]; then
+  if [[ -z "${asset_url}" ]] || [[ "${asset_url}" = "null" ]]; then
     echo "::error::Release has no package-info.json asset"
     exit 1
   fi
@@ -109,12 +109,12 @@ get_archive_url() {
 
 # Get PackageDistro information
 get_package_distro() {
-  if [ ! -f "$PKG_DISTRO" ]; then
+  if [[ ! -f "${PKG_DISTRO}" ]]; then
     echo "Downloading packages-infos.json from PackageDistro"
-    local distro="$TMPDIR/package-infos.json.gz"
-    wget -qO "$distro" "https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
-    gunzip "$distro"
-    if [ ! -s "$PKG_DISTRO" ]; then
+    local distro="${TMPDIR}/package-infos.json.gz"
+    wget -qO "${distro}" "https://github.com/gap-system/PackageDistro/releases/download/latest/package-infos.json.gz"
+    gunzip "${distro}"
+    if [[ ! -s "${PKG_DISTRO}" ]]; then
       echo "::error::Could not download PackageDistro json"
       exit 1
     fi
@@ -128,16 +128,18 @@ get_repo_from_name() {
   # Create the required file at $PKG_DISTRO
   get_package_distro
 
-  local pkg=$(jq -c --arg n "$name" '.[$n]' "$PKG_DISTRO")
+  local pkg
+  pkg=$(jq -c --arg n "${name}" '.[$n]' "${PKG_DISTRO}")
 
-  if [ "$pkg" = "null" ] || [ -z "$pkg" ]; then
-    echo "::error::Package $name not found in PackageDistro"
+  if [[ "${pkg}" = "null" ]] || [[ -z "${pkg}" ]]; then
+    echo "::error::Package ${name} not found in PackageDistro"
     exit 1
   fi
 
   # Don't try to get URL from PackageDistro - latest version not be merged yet!
-  local repo_url=$(echo "$pkg" | jq -r '.SourceRepository.URL') || {
-    echo "::error::Package $name not found in PackageDistro"
+  local repo_url
+  repo_url=$(echo "${pkg}" | jq -r '.SourceRepository.URL') || {
+    echo "::error::Package ${name} not found in PackageDistro"
     exit 1
   }
   repo=${repo_url#https://github.com/}
