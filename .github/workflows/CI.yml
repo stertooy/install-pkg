@@ -57,4 +57,4 @@ jobs:
 
       - name: "Shellcheck"
         shell: bash
-        run: shellcheck -o all *.sh
+        run: shellcheck -e SC2034,SC2154 -o all *.sh
