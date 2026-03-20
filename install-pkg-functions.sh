@@ -52,6 +52,7 @@ get_pkg_name() {
 get_archive_url() {
   local repo="$1"
   local version="$2"
+  declare -g WGET_HEADER
   
   if [[ "${version}" = "latest" ]]; then
     echo "Fetching latest release for ${repo}"
@@ -68,7 +69,7 @@ get_archive_url() {
       | .[0]
     ' "${TMPDIR}/releases.json")
 
-    if [ "${release}" = "null" ] || [ -z "${release}" ]; then
+    if [[ "${release}" = "null" ]] || [[ -z "${release}" ]]; then
       echo "::error::No release >= ${version} found"
       exit 1
     fi
@@ -102,6 +103,7 @@ get_archive_url() {
 
   version=$(jq -r '.Version' "${info}")
   echo "Selected version ${version} from ${repo} releases"
+  declare -g archive_url
   archive_url=$(prefer_archive "${archive_base}" "${formats}")
   
   rm "${info}"
@@ -109,6 +111,7 @@ get_archive_url() {
 
 # Get PackageDistro information
 get_package_distro() {
+  declare -g PKG_DISTRO
   if [[ ! -f "${PKG_DISTRO}" ]]; then
     echo "Downloading packages-infos.json from PackageDistro"
     local distro="${TMPDIR}/package-infos.json.gz"
@@ -151,7 +154,7 @@ check_pkg_availability() {
   local pkg="$1"
   local ver="$2"
   gap -A -q <<GAPINPUT
-    QuitGap( TestPackageAvailability( "$pkg", "$ver" ) <> fail );
+    QuitGap( TestPackageAvailability( "${pkg}", "${ver}" ) <> fail );
 GAPINPUT
   return $?
 }
@@ -159,6 +162,6 @@ GAPINPUT
 # Remove existing package versions
 clear_dest() {
   local dest="$1"
-  rm -rf "$dest"
-  rm -rf "$dest-*"
+  rm -rf "${dest}"
+  rm -rf "${dest}-*"
 }
