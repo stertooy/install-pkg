@@ -52,7 +52,7 @@ jobs:
         run: |
           $GAP -A <<GAPInput
             chck := function( pkg, ver )
-              local bool;
+              local test;
               test := TestPackageAvailability( pkg, ver );
               Print(test);
               return test <> fail;
