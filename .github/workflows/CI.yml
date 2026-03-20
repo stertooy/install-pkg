@@ -47,6 +47,21 @@ jobs:
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
             https://github.com/gap-packages/forms/releases/download/v1.2.14/forms-1.2.14.zip
 
+      - name: "Check if packages were installed"
+        shell: bash
+        run: |
+          gap -A <<GAPInput
+            bool :=
+            TestPackageAvailability( "smallclassnr", "1.4.4" ) and
+            TestPackageAvailability( "autodoc", "2026.03.18" ) and
+            TestPackageAvailability( "polycyclic", "2.17" ) and
+            TestPackageAvailability( "groupoids", "1.80" ) and
+            TestPackageAvailability( "utils", "0.92" ) and
+            TestPackageAvailability( "grpconst", "2.6.2" ) and
+            TestPackageAvailability( "forms", "1.2.14" );
+            QUIT_GAP(bool);
+          GAPInput
+
   test-scripts:
     name: "Test the scripts used by this action"
     runs-on: ubuntu-slim
