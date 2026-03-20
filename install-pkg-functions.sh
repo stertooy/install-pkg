@@ -5,16 +5,16 @@ download_and_extract() {
   local url="$1"
   local target="$2"
 
-  clear_dest "$target"
+  clear_dest "${target}"
+  local filename
+  filename=$(basename "${url}")
+  echo "Extracting ${filename} to ${target}."
   
-  local filename=$(basename "$url")
-  echo "Extracting $filename to $target."
-  
-  local archive="$TMPDIR/$filename"
-  wget -qO "$archive" "$url"
-  mkdir -p "$target"
-  bsdtar -xf "$archive" -C "$target"
-  rm "$archive"
+  local archive="${TMPDIR}/${filename}"
+  wget -qO "${archive}" "${url}"
+  mkdir -p "${target}"
+  bsdtar -xf "${archive}" -C "${target}"
+  rm "${archive}"
 }
 
 # Create valid archive url from base url and possible formats
@@ -23,11 +23,11 @@ prefer_archive() {
   local formats="$2" # newline-separated list
 
   # Prefer .tar.gz if available
-  if echo "$formats" | grep -q "^\.tar\.gz$"; then
+  if echo "${formats}" | grep -q "^\.tar\.gz$"; then
     echo "${base}.tar.gz"
-  elif echo "$formats" | grep -q "^\.tar\.bz2$"; then
+  elif echo "${formats}" | grep -q "^\.tar\.bz2$"; then
     echo "${base}.tar.bz2"
-  elif echo "$formats" | grep -q "^\.zip$"; then
+  elif echo "${formats}" | grep -q "^\.zip$"; then
     echo "${base}.zip"
   else
     echo "::error::No supported archive format found"
@@ -37,14 +37,15 @@ prefer_archive() {
 
 # Get package name
 get_pkg_name() {
-  local base=$(basename "$1")
+  local base
+  base=$(basename "$1")
 
   # Remove archive suffix
-  base=$(echo "$base" | sed -E 's/\.(tar\.gz|tar\.bz2|zip)$//')
+  base=$(echo "${base}" | sed -E 's/\.(tar\.gz|tar\.bz2|zip)$//')
   # Remove version suffix
-  base=$(echo "$base" | sed -E 's/-[0-9]+(\.[0-9]+)*$//')
+  base=$(echo "${base}" | sed -E 's/-[0-9]+(\.[0-9]+)*$//')
   # Convert to lowecase
-  name=$(echo "$base" | tr '[:upper:]' '[:lower:]')
+  name=$(echo "${base}" | tr '[:upper:]' '[:lower:]')
 }
 
 # Get archive URL
@@ -52,53 +53,58 @@ get_archive_url() {
   local repo="$1"
   local version="$2"
   
-  if [ "$version" = "latest" ]; then
-    echo "Fetching latest release for $repo"
-    wget --header="$WGET_HEADER" -qO "$TMPDIR/release.json" "https://api.github.com/repos/$repo/releases/latest"
+  if [ "${version}" = "latest" ]; then
+    echo "Fetching latest release for ${repo}"
+    wget --header="${WGET_HEADER}" -qO "${TMPDIR}/release.json" "https://api.github.com/repos/${repo}/releases/latest"
   else
-    echo "Selecting oldest release >= $version"
-    wget --header="$WGET_HEADER" -qO "$TMPDIR/releases.json" "https://api.github.com/repos/$repo/releases"
+    echo "Selecting oldest release >= ${version}"
+    wget --header="${WGET_HEADER}" -qO "${TMPDIR}/releases.json" "https://api.github.com/repos/${repo}/releases"
 
-    local release=$(jq -c --arg v "$version" '
+    local release
+    release=$(jq -c --arg v "${version}" '
       map(. + {ver:(.tag_name|sub("^v";""))})
       | sort_by(.ver)
       | map(select(.ver >= $v))
       | .[0]
-    ' "$TMPDIR/releases.json")
+    ' "${TMPDIR}/releases.json")
 
-    if [ "$release" = "null" ] || [ -z "$release" ]; then
-      echo "::error::No release >= $version found"
+    if [ "${release}" = "null" ] || [ -z "${release}" ]; then
+      echo "::error::No release >= ${version} found"
       exit 1
     fi
 
-    echo "$release" > "$TMPDIR/release.json"
-    rm "$TMPDIR/releases.json"
+    echo "${release}" > "${TMPDIR}/release.json"
+    rm "${TMPDIR}/releases.json"
   fi
-  
-  local asset_url=$(jq -r '
+
+  local asset_url
+  asset_url=$(jq -r '
     .assets[]
     | select(.name=="package-info.json")
     | .browser_download_url
-  ' "$TMPDIR/release.json")
-  rm "$TMPDIR/release.json"
+  ' "${TMPDIR}/release.json")
+  rm "${TMPDIR}/release.json"
 
-  if [ -z "$asset_url" ] || [ "$asset_url" = "null" ]; then
+  if [ -z "${asset_url}" ] || [ "${asset_url}" = "null" ]; then
     echo "::error::Release has no package-info.json asset"
     exit 1
   fi
 
-  local info="$TMPDIR/package-info.json"
-  wget -qO "$info" "$asset_url"
+  local info
+  info="${TMPDIR}/package-info.json"
+  wget -qO "${info}" "${asset_url}"
 
-  local archive_base=$(jq -r '.ArchiveURL' "$info")
-  local formats=$(jq -r '.ArchiveFormats' "$info")
-  formats=$(echo "$formats" | tr ' ' '\n')
+  local archive_base
+  local formats
+  archive_base=$(jq -r '.ArchiveURL' "${info}")
+  formats=$(jq -r '.ArchiveFormats' "${info}")
+  formats=$(echo "${formats}" | tr ' ' '\n')
 
-  version=$(jq -r '.Version' "$info")
-  echo "Selected version $version from $repo releases"
-  archive_url=$(prefer_archive "$archive_base" "$formats")
+  version=$(jq -r '.Version' "${info}")
+  echo "Selected version ${version} from ${repo} releases"
+  archive_url=$(prefer_archive "${archive_base}" "${formats}")
   
-  rm "$info"
+  rm "${info}"
 }
 
 # Get PackageDistro information
