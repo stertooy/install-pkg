@@ -18,22 +18,6 @@ runs:
     - name: Install GAP packages
       shell: bash
       run: |
-        # Convert newlines to spaces
-        PACKAGES=$(echo "${{ inputs.packages }}" | tr '\n' ' ')
-     
-        if [ "$RUNNER_OS" = "Windows" ]; then
-          TMPDIR=$(cygpath -u "$RUNNER_TEMP/install-pkg")
-        else
-          TMPDIR="$RUNNER_TEMP/install-pkg"
-        fi
-        
-        mkdir -p "$TMPDIR"
-        DEST="$GAPROOT/pkg"
-        PKG_DISTRO="$TMPDIR/package-infos.json"
-        
-        # Needed to get reasonable API limits
-        WGET_HEADER="Authorization: token ${{ github.token }}"
-
         ##### BEGIN HELPER FUNCTIONS #####
         # Download archive and extract to folder
         download_and_extract() {
@@ -191,6 +175,22 @@ runs:
 
         ##### END HELPER FUNCTIONS #####
         
+        # Convert newlines to spaces
+        PACKAGES=$(echo "${{ inputs.packages }}" | tr '\n' ' ')
+     
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          TMPDIR=$(cygpath -u "$RUNNER_TEMP/install-pkg")
+        else
+          TMPDIR="$RUNNER_TEMP/install-pkg"
+        fi
+        
+        mkdir -p "$TMPDIR"
+        DEST="$GAPROOT/pkg"
+        PKG_DISTRO="$TMPDIR/package-infos.json"
+        
+        # Needed to get reasonable API limits
+        WGET_HEADER="Authorization: token ${{ github.token }}"
+
         for pkg in $PACKAGES; do
           echo "::group::Installing $pkg"
           
