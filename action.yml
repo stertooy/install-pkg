@@ -29,7 +29,8 @@ runs:
         
         mkdir -p "$TMPDIR"
         DEST="$GAPROOT/pkg"
-        PKG_DISTRO="$TMPDIR/package-infos.json
+        PKG_DISTRO="$TMPDIR/package-infos.json"
+        
         # Needed to get reasonable API limits
         WGET_HEADER="Authorization: token ${{ github.token }}"
 
