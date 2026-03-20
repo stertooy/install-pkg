@@ -56,7 +56,7 @@ jobs:
               test := TestPackageAvailability( pkg, ver );
               Print(test);
               return test <> fail;
-            end;
+            end;;
             bool :=
             chck( "smallclassnr", "1.4.4"      ) and
             chck( "autodoc",      "2026.03.18" ) and
@@ -64,7 +64,7 @@ jobs:
             chck( "groupoids",    "1.80"       ) and
             chck( "utils",        "0.92"       ) and
             chck( "grpconst",     "2.6.2"      ) and
-            chck( "forms",        "1.2.14"     );
+            chck( "forms",        "1.2.14"     );;
             QUIT_GAP(bool);
           GAPInput
 
