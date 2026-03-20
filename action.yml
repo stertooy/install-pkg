@@ -27,7 +27,7 @@ runs:
           clear_dest "$target"
           
           local filename=$(basename "$url")
-          echo "Installing $filename at $target."
+          echo "Extracting $filename to $target."
           
           local archive="$TMPDIR/$filename"
           wget -qO "$archive" "$url"
@@ -229,9 +229,9 @@ runs:
             fi
 
             if [ "$version" = "devel" ]; then
-              echo "Cloning development branch of $repo"
+              echo "Cloning development branch of $repo to $pkgdir"
               clear_dest "$pkgdir"
-              git clone --depth=1 --single-branch "https://github.com/$repo.git" "$pkgdir"
+              git clone -q --depth=1 --single-branch "https://github.com/$repo.git" "$pkgdir"
             else
               get_archive_url "$repo" "$version"
               
