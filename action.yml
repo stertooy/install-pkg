@@ -15,72 +15,73 @@ runs:
       if: ${{ runner.os == 'Linux' }}
       shell: bash
       run: sudo apt install -y libarchive-tools # bsdtar
+
     - name: Install GAP packages
       shell: bash
       run: |
         # Convert newlines to spaces
         PACKAGES=$(echo "${{ inputs.packages }}" | tr '\n' ' ')
      
-        if [ "$RUNNER_OS" = "Windows" ]; then
-          TMPDIR=$(cygpath -u "$RUNNER_TEMP/install-pkg")
+        if [[ "${RUNNER_OS}" = "Windows" ]]; then
+          TMPDIR=$(cygpath -u "${RUNNER_TEMP}/install-pkg")
         else
-          TMPDIR="$RUNNER_TEMP/install-pkg"
+          TMPDIR="${RUNNER_TEMP}/install-pkg"
         fi
         
-        mkdir -p "$TMPDIR"
-        DEST="$GAPROOT/pkg"
-        PKG_DISTRO="$TMPDIR/package-infos.json"
+        mkdir -p "${TMPDIR}"
+        DEST="${GAPROOT}/pkg"
+        PKG_DISTRO="${TMPDIR}/package-infos.json"
         
         # Needed to get reasonable API limits
         WGET_HEADER="Authorization: token ${{ github.token }}"
 
         # Load helper functions
-        source $GITHUB_ACTION_PATH/install-pkg-functions.sh
+        source "${GITHUB_ACTION_PATH}/install-pkg-functions.sh"
         
-        for pkg in $PACKAGES; do
-          echo "::group::Installing $pkg"
+        for pkg in ${PACKAGES}; do
+          echo "::group::Installing ${pkg}"
           
           version="latest"
 
           # Split off version, if present
-          if [[ "$pkg" == *@* ]]; then
+          if [[ "${pkg}" == *@* ]]; then
             version="${pkg##*@}"
             pkg="${pkg%@*}"
           fi
 
           # Set the $name variable
-          get_pkg_name "$pkg"
-          pkgdir="$DEST/$name"
+          get_pkg_name "${pkg}"
+          pkgdir="${DEST}/${name}"
 
-          if [[ "$pkg" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
+          if [[ "${pkg}" =~ ^https?://.*\.(tar\.gz|tar\.bz2|zip)$ ]]; then
             echo "Input is an archive"
             
-            download_and_extract "$pkg" "$pkgdir"
+            download_and_extract "${pkg}" "${pkgdir}"
           else
             # Set the $repo variable
-            if [[ "$pkg" =~ .*/.* ]]; then
+            if [[ "${pkg}" =~ .*/.* ]]; then
               echo "Input is a package repository"
-              repo="$pkg"
+              repo="${pkg}"
             else
               echo "Input is a package name"
-              get_repo_from_name $name
+              get_repo_from_name "${name}"
             fi
 
-            if [ "$version" = "devel" ]; then
-              echo "Cloning development branch of $repo to $pkgdir"
-              clear_dest "$pkgdir"
-              git clone -q --depth=1 --single-branch "https://github.com/$repo.git" "$pkgdir"
+            if [[ "${version}" = "devel" ]]; then
+              echo "Cloning development branch of ${repo} to ${pkgdir}"
+              clear_dest "${pkgdir}"
+              git clone -q --depth=1 --single-branch "https://github.com/${repo}.git" "${pkgdir}"
             else
               # Set the $archive_url variable and update the $version variable
-              get_archive_url "$repo" "$version"
+              get_archive_url "${repo}" "${version}"
               
               # Check if package version is already available
-              if check_pkg_availability $name $version; then
-                  echo "Package $name $version is already available, skipping."
+              if check_pkg_availability "${name}" "${version}"; then
+                  echo "Package ${name} ${version} is already available, skipping."
                   continue
               fi
               
-              download_and_extract "$archive_url" "$pkgdir"
+              download_and_extract "${archive_url}" "${pkgdir}"
             fi
           fi
         done
