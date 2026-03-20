@@ -60,7 +60,7 @@ jobs:
             bool :=
             chck( "smallclassnr", "1.4.4"      ) and
             chck( "autodoc",      "2026.03.18" ) and
-            chck( "polycyclic",   "3.17"       ) and
+            chck( "polycyclic",   "2.17"       ) and
             chck( "groupoids",    "1.80"       ) and
             chck( "utils",        "0.92"       ) and
             chck( "grpconst",     "2.6.2"      ) and
