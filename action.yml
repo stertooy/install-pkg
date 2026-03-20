@@ -22,28 +22,26 @@ runs:
         PACKAGES=$(echo "${{ inputs.packages }}" | tr '\n' ' ')
      
         if [ "$RUNNER_OS" = "Windows" ]; then
-          DEST="$GAPROOT/pkg"
           TMPDIR=$(cygpath -u "$RUNNER_TEMP/install-pkg")
         else
-          DEST="$GAPROOT/pkg"
           TMPDIR="$RUNNER_TEMP/install-pkg"
         fi
         
-        #mkdir -p "$DEST"
         mkdir -p "$TMPDIR"
-        
-        PKG_DISTRO="$TMPDIR/package-infos.json"
+        DEST="$GAPROOT/pkg"
+        PKG_DISTRO="$TMPDIR/package-infos.json
+        # Needed to get reasonable API limits
         WGET_HEADER="Authorization: token ${{ github.token }}"
 
         ##### BEGIN HELPER FUNCTIONS #####
         # Download archive and extract to folder
         download_and_extract() {
           local url="$1"
-          local filename=$(basename "$url")
           local target="$2"
 
           clear_dest "$target"
           
+          local filename=$(basename "$url")
           echo "Installing $filename at $target."
           
           local archive="$TMPDIR/$filename"
@@ -183,12 +181,7 @@ runs:
           return $?
         }
 
-        # Build package
-        build_pkg() {
-          echo "TODO - build package here"
-        }
-
-        # Remove old folders
+        # Remove existing package versions
         clear_dest() {
           local dest="$1"
           rm -rf "$dest"
@@ -196,10 +189,13 @@ runs:
         }
 
         ##### END HELPER FUNCTIONS #####
+        
         for pkg in $PACKAGES; do
           echo "::group::Installing $pkg"
           
           version="latest"
+
+          # Split off version, if present
           if [[ "$pkg" == *@* ]]; then
             version="${pkg##*@}"
             pkg="${pkg%@*}"
@@ -234,7 +230,7 @@ runs:
             if [ "$version" = "devel" ]; then
               echo "Cloning development branch of $repo"
               clear_dest "$pkgdir"
-              git clone "https://github.com/$repo.git" "$pkgdir"
+              git clone --depth=1 --single-branch "https://github.com/$repo.git" "$pkgdir"
             else
               get_archive_url "$repo" "$version"
               
@@ -251,16 +247,4 @@ runs:
               download_and_extract "$archive_url" "$pkgdir"
             fi
           fi
-          
-          echo "Building package in $pkgdir"
-        
-          (
-            cd "$pkgdir" || {
-              echo "Directory $pkgdir not found"
-              exit 1
-            }
-            echo "now inside $pkgdir"
-            build_pkg
-          )
-        
         done
