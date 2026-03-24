@@ -21,7 +21,7 @@ jobs:
           - '4.15'
           - '4.13'
           - '4.11'
-          - '4.9'
+
     steps:
       # TODO: replace by gap-actions repository when merged
       - name: "Setup Cygwin"
@@ -42,7 +42,7 @@ jobs:
         uses: ./this-action/
         with:
           packages: |
-            SmallClassNr@devel
+            Example@devel
             gap-packages/AutoDoc
             POLYCYCLIC
             groupoids@1.80
@@ -61,7 +61,7 @@ jobs:
               return test <> fail;
             end;;
             bool :=
-            chck( "smallclassnr", "1.4.4"      ) and
+            chck( "example",      "4.4.1"      ) and
             chck( "autodoc",      "2026.03.18" ) and
             chck( "polycyclic",   "2.17"       ) and
             chck( "groupoids",    "1.80"       ) and
