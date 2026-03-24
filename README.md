@@ -21,10 +21,10 @@ The following input is mandatory:
 
 - `packages`:
   - Space-separated or newline-separated list of packages to install. Packages are either
-    given as `package@version`, or by an URL pointing to a release archive. Here, `package`
-    can either be the name of a package in the GAP package distribution or the name of a
-    GitHub repository (of the form "org/repo"). The suffix `version` is either `latest`,
-    `devel`, or a version number.
+    given as `package`, as `package@version`, or by an URL pointing to a release archive.
+    Here, `package` can either be the name of a package in the GAP package distribution or
+    the name of a GitHub repository (of the form "org/repo"). The optional suffix `version`
+    is either `latest`, `devel`, or a version number.
   - default: `''`
 
 ### Examples
