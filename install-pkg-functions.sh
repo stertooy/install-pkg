@@ -149,7 +149,7 @@ check_pkg_availability() {
   local pkg="$1"
   local ver="$2"
   gap -A -q <<GAPINPUT
-    QuitGap( TestPackageAvailability( "${pkg}", "${ver}" ) <> fail );
+    QUIT_GAP( TestPackageAvailability( "${pkg}", "${ver}" ) <> fail );
 GAPINPUT
   return $?
 }
