@@ -61,15 +61,16 @@ jobs:
               Print(test,"\n");
               return test <> fail;
             end;;
-            bool :=
-            chck( "example",      "4.4.1"      ) and
-            chck( "autodoc",      "2026.03.18" ) and
-            chck( "primgrp",      "4.0.2"      ) and
-            chck( "groupoids",    "1.80"       ) and
-            chck( "utils",        "0.92"       ) and
-            chck( "grpconst",     "2.6.2"      ) and
-            chck( "forms",        "1.2.14"     );;
-            QUIT_GAP(bool);
+            bool := [
+              chck( "example",      "4.4.1"      ),
+              chck( "autodoc",      "2026.03.18" ),
+              chck( "primgrp",      "4.0.2"      ),
+              chck( "groupoids",    "1.80"       ),
+              chck( "utils",        "0.92"       ),
+              chck( "grpconst",     "2.6.2"      ),
+              chck( "forms",        "1.2.14"     )
+            ];;
+            QUIT_GAP( ForAll( bool, x -> x ) );
           GAPInput
 
   test-scripts:
