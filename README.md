@@ -6,13 +6,13 @@ This GitHub action installs additional GAP packages.
 
 The action `install-pkg` has to be called by the workflow of a GAP
 package.
-It installs the package(s) using PackageMaker. (TODO: link)
+It installs the package(s) in GAP's `pkg` subfolder.
 
 ## Migration from setup-gap@v2
 
 This package is intended to replace the `gap-pkgs-to-clone` input, though with some
-notable changes. PackageManager will also build the package, and install other
-packages if needed.
+notable changes. Packages will **not** be built, this has to be done by a subsequent
+`build-pkg` action.
 
 
 ### Inputs
@@ -20,25 +20,12 @@ packages if needed.
 The following input is mandatory:
 
 - `packages`:
-  - Space-separated or newline-separated list of packages to install.
-    Can be the name of the package, the link to a git repo (ending in `.git'`'), or
-    the link to a release archive.
-  - default: `'true'`
- 
-The following inputs are all optional:
-
-- `ignore-errors`:
-  - Ignore errors raised by PackageManager. Can be of use when it
-    fails to build documentation that you don't need anyway.
-  - default: `'false'`
-- `use-latex`:
-  - Install and use LaTeX (only works on Linux).
-  - default: `'false'`
-
-
-### What's new in v1
-
-- EVERYTHING
+  - Space-separated or newline-separated list of packages to install. Packages are either
+    given as `package`, as `package@version`, or by an URL pointing to a release archive.
+    Here, `package` can either be the name of a package in the GAP package distribution or
+    the name of a GitHub repository (of the form "org/repo"). The optional suffix `version`
+    is either `latest`, `devel`, or a version number.
+  - default: `''`
 
 ### Examples
 
@@ -63,7 +50,10 @@ jobs:
       - uses: gap-actions/setup-gap@v3
       - uses: gap-actions/install-pkg@v1
         with:
-          packages: 'example'
+          packages: |
+            gap-packages/smallgrp
+            autpgrp@devel
+            https://github.com/gap-packages/primgrp/releases/download/v4.0.2/primgrp-4.0.2.tar.gz
 ```
 
 ## Contact

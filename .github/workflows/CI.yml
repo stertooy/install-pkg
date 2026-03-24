@@ -6,40 +6,82 @@ on:
     branches:
       - main
   pull_request:
+  workflow_dispatch: 
 
 jobs:
   test:
-    name: "Test on ${{ matrix.gap-version }}, use-latex: ${{ matrix.use-latex }}, ignore-errors: ${{ matrix.ignore-errors }}"
-    runs-on: ubuntu-latest
+    name: "Test on ${{ matrix.os }}, GAP version ${{ matrix.gap-version }}"
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         gap-version:
           - 'devel'
+          - '4.15'
           - '4.14'
           - '4.13'
           - '4.12'
           - '4.11'
-          - '4.10'
-        use-latex: ["true","false"]
-        ignore-errors: ["true","false"]
-        exclude:
-          - use-latex: "false"
-            ignore-errors: "false"
-          
+
     steps:
+      - name: "Setup Cygwin"
+        uses: gap-actions/setup-cygwin@v2
+        if: ${{ matrix.os == 'windows-latest' }}
+        
       - name: "Check out this repository"
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: this-action/
-      - uses: gap-actions/setup-gap@v3
+          
+      - name: "Setup GAP"
+        uses: gap-actions/setup-gap@v3
         with:
           gap-version: ${{ matrix.gap-version }}
-      - uses: ./this-action/
+          
+      - name: "Install additional GAP packages"
+        uses: ./this-action/
         with:
           packages: |
-            https://github.com/gap-packages/sophus.git
-            utils
+            Example@devel
+            gap-packages/AutoDoc
+            PrImGrP
+            groupoids@1.80
+            gap-packages/utils@0.92
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
-          use-latex: ${{ matrix.use-latex }}
-          ignore-errors: ${{ matrix.ignore-errors }}
+            https://github.com/gap-packages/forms/releases/download/v1.2.14/forms-1.2.14.zip
+
+      - name: "Check if packages were installed"
+        shell: bash
+        run: |
+          $GAP -A -q <<GAPInput
+            chck := function( pkg, ver )
+              local test;
+              test := TestPackageAvailability( pkg, ver );
+              Print(test,"\n");
+              return test <> fail;
+            end;;
+            bool := [
+              chck( "example",      "4.4.1"      ),
+              chck( "autodoc",      "2026.03.18" ),
+              chck( "primgrp",      "4.0.2"      ),
+              chck( "groupoids",    "1.80"       ),
+              chck( "utils",        "0.92"       ),
+              chck( "grpconst",     "2.6.2"      ),
+              chck( "forms",        "1.2.14"     )
+            ];;
+            QUIT_GAP( ForAll( bool, x -> x ) );
+          GAPInput
+
+  test-scripts:
+    name: "Test the scripts used by this action"
+    runs-on: ubuntu-slim
+
+    steps:
+
+      - name: "Check out this repository"
+        uses: actions/checkout@v6
+
+      - name: "Shellcheck"
+        shell: bash
+        run: shellcheck -e SC2034,SC2154 -o all *.sh
