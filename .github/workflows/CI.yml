@@ -43,6 +43,7 @@ jobs:
         uses: ./this-action/
         with:
           packages: |
+            gap-packages/recog@devel
             Example@devel
             gap-packages/AutoDoc
             PrImGrP
