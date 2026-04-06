@@ -14,7 +14,10 @@ runs:
     - name: Install bsdtar
       if: ${{ runner.os == 'Linux' }}
       shell: bash
-      run: sudo apt install -y libarchive-tools # bsdtar
+      run: |
+        # install bsdtar
+        sudo apt-get update
+        sudo apt-get install --no-install-recommends libarchive-tools
 
     - name: Install GAP packages
       shell: bash
