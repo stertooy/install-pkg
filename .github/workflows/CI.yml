@@ -47,6 +47,7 @@ jobs:
             gap-packages/AutoDoc
             PrImGrP
             groupoids@1.80
+            twistedconjugacy@3.3.2
             gap-packages/utils@0.92
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
             https://github.com/gap-packages/forms/releases/download/v1.2.14/forms-1.2.14.zip
@@ -58,17 +59,18 @@ jobs:
             chck := function( pkg, ver )
               local test;
               test := TestPackageAvailability( pkg, ver );
-              Print(test,"\n");
+              Print( test, "\n" );
               return test <> fail;
             end;;
             bool := [
-              chck( "example",      "4.4.1"      ),
-              chck( "autodoc",      "2026.03.18" ),
-              chck( "primgrp",      "4.0.2"      ),
-              chck( "groupoids",    "1.80"       ),
-              chck( "utils",        "0.92"       ),
-              chck( "grpconst",     "2.6.2"      ),
-              chck( "forms",        "1.2.14"     )
+              chck( "example",             "4.4.1"      ),
+              chck( "autodoc",             "2026.03.18" ),
+              chck( "primgrp",             "4.0.2"      ),
+              chck( "groupoids",           "1.80"       ),
+              chck( "twistedconjugacy",    "3.3.2"      ),
+              chck( "utils",               "0.92"       ),
+              chck( "grpconst",            "2.6.2"      ),
+              chck( "forms",               "1.2.14"     )
             ];;
             QUIT_GAP( ForAll( bool, x -> x ) );
           GAPInput
