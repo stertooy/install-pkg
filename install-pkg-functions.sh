@@ -121,7 +121,7 @@ get_package_distro() {
 }
 
 # Get repository name from package name using PackageDistro
-get_repo_from_name() {
+get_pkg_info_from_name() {
   local name="$1"
 
   # Create the required file at $PKG_DISTRO
@@ -135,13 +135,13 @@ get_repo_from_name() {
     exit 1
   fi
 
-  # Don't try to get URL from PackageDistro - latest version not be merged yet!
   local repo_url
-  repo_url=$(echo "${pkg}" | jq -r '.SourceRepository.URL') || {
-    echo "::error::Package ${name} not found in PackageDistro"
-    exit 1
-  }
+  repo_url=$(echo "${pkg}" | jq -r '.SourceRepository.URL')
   repo=${repo_url#https://github.com/}
+
+  archive_url=$(echo "${pkg}" | jq -r '.ArchiveURL')
+
+  distro_ver=$(echo "${pkg}" | jq -r '.Version')
 }
 
 # Use GAP to check if package-version combination is already installed
