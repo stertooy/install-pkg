@@ -41,8 +41,7 @@ runs:
         source "${GITHUB_ACTION_PATH}/install-pkg-functions.sh"
         
         for pkg in ${PACKAGES}; do
-          #echo "::group::Installing ${pkg}"
-          echo "Installing ${pkg}"
+          echo "::group::Installing ${pkg}"
           
           version="latest"
           repo=""
@@ -72,11 +71,13 @@ runs:
               get_pkg_info_from_name "${name}"
               # If either we want the latest distro version, or the version we want
               # just happens to be latest one, then we use the distro
-              if [[ "${version}" = "latest" ]] || [[ "${version}" = "${distro_ver}" ]]; then
+              if [[ "${version}" = "latest" ]] then
                 echo "Using latest version from package distribution"
                 source="distro"
-                # Replace "latest" by actual version if necessary
                 version="${distro_ver}"
+              elif [[ "${version}" = "${distro_ver}" ]]; then
+                echo "Given version matches version in package distribution"
+                source="distro"
               fi
             fi
 
@@ -97,7 +98,6 @@ runs:
                   continue
               fi
 
-              echo "Running download_and_extract ${archive_url} ${pkgdir}"
               download_and_extract "${archive_url}" "${pkgdir}"
             fi
           fi
