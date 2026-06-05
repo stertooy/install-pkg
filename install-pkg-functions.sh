@@ -104,11 +104,11 @@ get_archive_url() {
       PrintTo( "${TMPDIR}/version.txt", info.Version );;
       QUIT;
 GAPInput
-      formats=$(tr -d '\\\n' < ${TMPDIR}/formats.txt)"
+      formats=$(tr -d '\\\n' < ${TMPDIR}/formats.txt)
       rm ${TMPDIR}/formats.txt
-      archive_base=$(tr -d '\\\n' < ${TMPDIR}/archive_base.txt)"
+      archive_base=$(tr -d '\\\n' < ${TMPDIR}/archive_base.txt)
       rm ${TMPDIR}/archive_base.txt
-      version=$(tr -d '\\\n' < ${TMPDIR}/version.txt)"
+      version=$(tr -d '\\\n' < ${TMPDIR}/version.txt)
       rm ${TMPDIR}/version.txt
   else
     echo "Using package-info.json asset"
