@@ -71,13 +71,13 @@ runs:
               get_pkg_info_from_name "${name}"
               # If either we want the latest distro version, or the version we want
               # just happens to be latest one, then we use the distro
-              if [[ "${version}" = "latest" ]]; then
-                echo "Using latest version from package distribution"
+              echo "Package distribution contains version ${distro_ver}"
+              if [[ "${version}" = "latest" ]] || [[ "${version}" = "${distro_ver}" ]]; then
+                echo "Using package distribution"
                 source="distro"
                 version="${distro_ver}"
-              elif [[ "${version}" = "${distro_ver}" ]]; then
-                echo "Given version matches version in package distribution"
-                source="distro"
+              else
+                echo "Using repository ${repo}"
               fi
             fi
 
