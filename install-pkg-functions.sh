@@ -77,6 +77,9 @@ get_archive_url() {
     rm "${TMPDIR}/releases.json"
   fi
 
+  local tag_name
+  tag_name=$(jq -r '.tag_name' "${TMPDIR}/release.json")
+  
   local asset_url
   asset_url=$(jq -r '
     .assets[]
@@ -85,22 +88,35 @@ get_archive_url() {
   ' "${TMPDIR}/release.json")
   rm "${TMPDIR}/release.json"
 
-  if [[ -z "${asset_url}" ]] || [[ "${asset_url}" = "null" ]]; then
-    echo "::error::Release has no package-info.json asset"
-    exit 1
-  fi
-
   local info
-  info="${TMPDIR}/package-info.json"
-  wget -qO "${info}" "${asset_url}"
-
   local archive_base
   local formats
-  archive_base=$(jq -r '.ArchiveURL' "${info}")
-  formats=$(jq -r '.ArchiveFormats' "${info}")
-  formats=$(echo "${formats}" | tr ' ' '\n')
+  if [[ 1 = 1 ]]; then #[[ -z "${asset_url}" ]] || [[ "${asset_url}" = "null" ]]; then
+    echo "Using PackageInfo.g file"
+    asset_url="https://raw.githubusercontent.com/${repo}/refs/tags/${tag_name}/PackageInfo.g"
+    info="${TMPDIR}/PackageInfo.g"
+    wget -qO "${info}" "${asset_url}"
+    $GAP --bare -q <<GAPInput
+      Read("${info}");;
+      info := GAPInfo.PackageInfoCurrent;;
+      Exec( Concatenation( 
+        "formats=\"", info.ArchiveFormats, "\""));
+      Exec( Concatenation( 
+        "archive_base=\"", info.ArchiveURL, "\""));
+      Exec( Concatenation( 
+        "version=\"", info.Version, "\""));
+    GAPInput
+    # Get formats, archive_base, version... using GAP
+  else
+    echo "Using package-info.json asset"
+    info="${TMPDIR}/package-info.json"
+    wget -qO "${info}" "${asset_url}"
+    archive_base=$(jq -r '.ArchiveURL' "${info}")
+    formats=$(jq -r '.ArchiveFormats' "${info}")
+    formats=$(echo "${formats}" | tr ' ' '\n')
+    version=$(jq -r '.Version' "${info}")
+  fi
 
-  version=$(jq -r '.Version' "${info}")
   echo "Selected version ${version} from ${repo} releases"
   combine_url "${archive_base}" "${formats}"
   rm "${info}"
