@@ -47,7 +47,6 @@ jobs:
             gap-packages/AutoDoc
             PrImGrP
             groupoids@1.80
-            twistedconjugacy@3.3.2
             gap-packages/utils@0.92
             https://github.com/gap-packages/grpconst/releases/download/v2.6.2/grpconst-2.6.2.tar.gz
             https://github.com/gap-packages/forms/releases/download/v1.2.14/forms-1.2.14.zip
@@ -67,7 +66,6 @@ jobs:
               chck( "autodoc",             "2026.03.18" ),
               chck( "primgrp",             "4.0.2"      ),
               chck( "groupoids",           "1.80"       ),
-              chck( "twistedconjugacy",    "3.3.2"      ),
               chck( "utils",               "0.92"       ),
               chck( "grpconst",            "2.6.2"      ),
               chck( "forms",               "1.2.14"     )
