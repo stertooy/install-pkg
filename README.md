@@ -20,11 +20,16 @@ notable changes. Packages will **not** be built, this has to be done by a subseq
 The following input is mandatory:
 
 - `packages`:
-  - Space-separated or newline-separated list of packages to install. Packages are either
-    given as `package`, as `package@version`, or by an URL pointing to a release archive.
-    Here, `package` can either be the name of a package in the GAP package distribution or
-    the name of a GitHub repository (of the form "org/repo"). The optional suffix `version`
-    is either `latest`, `devel`, or a version number.
+  - Space-separated or newline-separated list of packages to install. Packages are given by
+    one of three formats:
+    - `packagename`: the name of a package in the [GAP package distribution](https://github.com/gap-system/PackageDistro).
+    - `user/repo`: the name of a GitHub repository containing the package.
+    - `https://url.to/archive.tar.gz`: an URL leading to a `.tar.gz`, `.tar.bz` or `.zip`
+      archive.
+    
+    The first two formats can be followed by a suffix `@version`, where `version` is either
+    `latest`, `devel`, or a version number. If no version is given, this defaults to `latest`.
+    
   - default: `''`
 
 ### Examples
