@@ -105,7 +105,7 @@ get_archive_url() {
         "archive_base=\"", info.ArchiveURL, "\""));
       Exec( Concatenation( 
         "version=\"", info.Version, "\""));
-    GAPInput
+GAPInput
     # Get formats, archive_base, version... using GAP
   else
     echo "Using package-info.json asset"
