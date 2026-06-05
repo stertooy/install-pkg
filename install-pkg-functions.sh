@@ -91,7 +91,7 @@ get_archive_url() {
   local info
   local archive_base
   local formats
-  if [[ 1 = 1 ]]; then #[[ -z "${asset_url}" ]] || [[ "${asset_url}" = "null" ]]; then
+  if [[ -z "${asset_url}" ]] || [[ "${asset_url}" = "null" ]]; then
     echo "Using PackageInfo.g file"
     asset_url="https://raw.githubusercontent.com/${repo}/refs/tags/${tag_name}/PackageInfo.g"
     info="${TMPDIR}/PackageInfo.g"
