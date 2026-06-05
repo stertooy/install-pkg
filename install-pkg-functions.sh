@@ -110,6 +110,7 @@ GAPInput
       rm ${TMPDIR}/archive_base.txt
       version=$(cat ${TMPDIR}/version.txt)
       rm ${TMPDIR}/version.txt
+      
   else
     echo "Using package-info.json asset"
     info="${TMPDIR}/package-info.json"
@@ -123,6 +124,12 @@ GAPInput
 
   echo "Selected version ${version} from ${repo} releases"
   combine_url "${archive_base}" "${formats}"
+  
+  echo "version=${version}"
+  echo "archive_base=${archive_base}"
+  echo "formats=${formats}"
+  echo "archive_url=${archive_url}"
+      
   rm "${info}"
 }
 
