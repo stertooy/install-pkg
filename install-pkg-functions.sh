@@ -116,9 +116,10 @@ GAPInput
     wget -qO "${info}" "${asset_url}"
     archive_base=$(jq -r '.ArchiveURL' "${info}")
     formats=$(jq -r '.ArchiveFormats' "${info}")
-    formats=$(echo "${formats}" | tr ' ' '\n')
     version=$(jq -r '.Version' "${info}")
   fi
+
+  formats=$(echo "${formats}" | tr ' ' '\n')
 
   echo "Selected version ${version} from ${repo} releases"
   combine_url "${archive_base}" "${formats}"
