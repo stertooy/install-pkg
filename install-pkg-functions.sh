@@ -96,7 +96,7 @@ get_archive_url() {
     asset_url="https://raw.githubusercontent.com/${repo}/refs/tags/${tag_name}/PackageInfo.g"
     info="${TMPDIR}/PackageInfo.g"
     wget -qO "${info}" "${asset_url}"
-    $GAP --bare -q <<GAPInput
+    ${GAP} --bare -q <<GAPInput
       Read("${info}");;
       info := GAPInfo.PackageInfoCurrent;;
       PrintTo( "${TMPDIR}/formats.txt", info.ArchiveFormats );;
@@ -104,12 +104,12 @@ get_archive_url() {
       PrintTo( "${TMPDIR}/version.txt", info.Version );;
       QUIT;
 GAPInput
-      formats=$(tr -d '\\\n' < ${TMPDIR}/formats.txt)
-      rm ${TMPDIR}/formats.txt
-      archive_base=$(tr -d '\\\n' < ${TMPDIR}/archive_base.txt)
-      rm ${TMPDIR}/archive_base.txt
-      version=$(tr -d '\\\n' < ${TMPDIR}/version.txt)
-      rm ${TMPDIR}/version.txt
+      formats=$(tr -d '\\\n' < "${TMPDIR}"/formats.txt)
+      rm "${TMPDIR}"/formats.txt
+      archive_base=$(tr -d '\\\n' < "${TMPDIR}"/archive_base.txt)
+      rm "${TMPDIR}"/archive_base.txt
+      version=$(tr -d '\\\n' < "${TMPDIR}"/version.txt)
+      rm "${TMPDIR}"/version.txt
   else
     echo "Using package-info.json asset"
     info="${TMPDIR}/package-info.json"
@@ -123,11 +123,6 @@ GAPInput
 
   echo "Selected version ${version} from ${repo} releases"
   combine_url "${archive_base}" "${formats}"
-  
-  echo "version=${version}"
-  echo "archive_base=${archive_base}"
-  echo "formats=${formats}"
-  echo "archive_url=${archive_url}"
       
   rm "${info}"
 }
