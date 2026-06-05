@@ -85,7 +85,7 @@ runs:
               git clone -q --depth=1 --single-branch "https://github.com/${repo}.git" "${pkgdir}"
             else
               # Update the $archive_url and $version variables
-              if [[ ${use_distro} = true ]]; then
+              if ! [[ ${use_distro} = true ]]; then
                 echo "Getting archive url from repository"
                 get_archive_url "${repo}" "${version}"
               fi
