@@ -139,7 +139,14 @@ get_pkg_info_from_name() {
   repo_url=$(echo "${pkg}" | jq -r '.SourceRepository.URL')
   repo=${repo_url#https://github.com/}
 
-  archive_url=$(echo "${pkg}" | jq -r '.ArchiveURL')
+  local formats
+  formats=$(echo "${pkg}" | jq -r '.ArchiveFormats')
+  formats=$(echo "${formats}" | tr ' ' '\n')
+
+  local archive_base
+  archive_base=$(echo "${pkg}" | jq -r '.ArchiveURL')
+  
+  combine_url "${archive_base}" "${formats}"
 
   distro_ver=$(echo "${pkg}" | jq -r '.Version')
 }
