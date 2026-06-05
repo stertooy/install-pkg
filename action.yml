@@ -61,21 +61,19 @@ runs:
             echo "Input is an archive"
             download_and_extract "${pkg}" "${pkgdir}"
           else
-            source="repo"
-            # Set the $repo variable if necessary
             if [[ "${pkg}" =~ .*/.* ]]; then
               echo "Input is a package repository"
               repo="${pkg}"
             else
               echo "Input is a package name"
               get_pkg_info_from_name "${name}"
-              # If either we want the latest distro version, or the version we want
-              # just happens to be latest one, then we use the distro
               echo "Package distribution contains version ${distro_ver}"
+              # If the desired version is the one available in the package distribution,
+              # we use the info there instead of going to the package repository
               if [[ "${version}" = "latest" ]] || [[ "${version}" = "${distro_ver}" ]]; then
                 echo "Using package distribution"
-                source="distro"
                 version="${distro_ver}"
+                use_distro=true
               else
                 echo "Using repository ${repo}"
               fi
@@ -87,7 +85,7 @@ runs:
               git clone -q --depth=1 --single-branch "https://github.com/${repo}.git" "${pkgdir}"
             else
               # Update the $archive_url and $version variables
-              if [[ "${source}" = "repo" ]]; then
+              if [[ ${use_distro} = true ]]; then
                 echo "Getting archive url from repository"
                 get_archive_url "${repo}" "${version}"
               fi
