@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: gap-actions/setup-gap@v3
       - uses: gap-actions/install-pkg@v1
         with:
